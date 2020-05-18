@@ -7,17 +7,17 @@ import pandas as pd
 import json
 import datetime
 from tqdm import tqdm
-import dataset
+from src import dataset
 
 def intermediate(pathRepository, nameExperiment):
     gr = GitRepository(pathRepository)
     pathsFile=glob.glob(pathRepository+"/**/*.java", recursive=True)
-    json_open=open("../dataset/"+nameExperiment+"/annotationsReformatted.json", 'r')
+    json_open=open("../dataset/"+nameExperiment+"/cassandra/annotationsReformatted.json", 'r')
     formattedAnnotations=json.load(json_open)
 
     with open('../result/'+nameExperiment+"/"+"["+datetime.datetime.now().strftime('%Y%m%d_%H%M%S')+"]"+'result.csv', 'a', newline="") as f:
         writer = csv.writer(f)
-        writer.writerow(["LOC", "addLOC", "delLOC", "chgNum", "fixChgNum", "pastBugNum", "hcm", "devTotal", "devMinor", "devMajor",     "Ownership", "period", "avgInterval", "maxInterval", "minInterval", "logCoupNum", "bugIntroNum", "isBuggy", "file"])
+        writer.writerow(["LOC", "addLOC", "delLOC", "chgNum", "fixChgNum", "pastBugNum", "hcm", "devTotal", "devMinor", "devMajor", "Ownership", "period", "avgInterval", "maxInterval", "minInterval", "logCoupNum", "bugIntroNum", "isBuggy", "file"])
 
         with tqdm(pathsFile,bar_format="{desc}: {percentage:3.0f}%|{bar:10}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}{postfix}]")     as  pbar:
             for pathFile in pbar:
@@ -35,7 +35,7 @@ def intermediate(pathRepository, nameExperiment):
                     file.calculateChgNum(gr,commits,nameFile),
                     file.calculateFixChgNum(gr, commits, nameFile),
                     file.calculatePastBugNum(gr, commits, nameFile, formattedAnnotations),
-                    file.calculateHCM(gr, commits, nameFile),
+                    file.calculateHCM(gr, commits, nameFile,formattedAnnotations),
                     file.calculateDevTotal(gr,commits,nameFile),
                     file.calculateDevMinor(gr,commits,nameFile),
                     file.calculateDevMajor(gr,commits,nameFile),

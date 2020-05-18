@@ -1,3 +1,5 @@
 result/
 model/
 dataset/
+.env
+InferBugs.code-workspace

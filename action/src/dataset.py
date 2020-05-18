@@ -2,26 +2,13 @@ import glob
 import os
 import sys
 from pydriller import GitRepository, RepositoryMining, domain
-import time
-from tqdm import tqdm
-import math
-import statistics
-
 import csv
-
-import pandas as pd
 import json
-
+import re
 from urllib.parse import quote
 import urllib.request as url
-import json
-import argparse
-import io
-
-import re
-import time
-import datetime
-
+import math
+import statistics
 class File:
     def get1(self):
         return 1
@@ -47,7 +34,7 @@ class File:
     def calculateFixChgNum(self, gr, commits, nameFile):
         fixChgNum=0
         gitlog_pattern= r'(?<=CASSANDRA-)\d+|(?<=#)\d+'
-        json_open = open('IDsBug.json', 'r')
+        json_open = open('../dataset/trial/cassandra/IDsBug.json', 'r')
         IDsBug = json.load(json_open)["IDsBug"]
         for commit in commits:
             result=re.match(gitlog_pattern, gr.get_commit(commit).msg)
