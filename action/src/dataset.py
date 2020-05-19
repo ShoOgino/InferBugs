@@ -9,29 +9,102 @@ from urllib.parse import quote
 import urllib.request as url
 import math
 import statistics
-class File:
-    def get1(self):
+from tqdm import tqdm
+
+import subprocess
+def local_chdir(func):
+    def _inner(*args, **kwargs):
+        dir_original = os.getcwd()
+        ret = func(*args, **kwargs)
+        os.chdir(dir_original)
+        return ret
+    return _inner
+def cloneRepository(urlRepository, pathRepository):
+    cmdGitClone=["git", "clone"]
+    cmdGitClone.extend([urlRepository, pathRepository])
+    subprocess.call()
+@local_chdir
+def checkoutRepository(pathRepository, IdCommit):
+    os.chdir(pathRepository)
+    cmdGitCheckout=["git", "checkout"]
+    cmdGitCheckout.extend([IdCommit])
+
+class Dataset:
+    def __init__(self,urlRepository, pathData, nameRepository, filterFile, codeIssueJira, nameProjectJira):
+        self.data=[]
+        self.urlRepository=urlRepository
+        self.pathData=pathData
+        self.nameRepository=nameRepository
+        self.pathRepository=os.path.join(self.pathData, nameRepository)
+        self.filterFile=filterFile
+        self.codeIssueJira=codeIssueJira
+        self.nameProjectJira=nameProjectJira
+        #cloneRepository(urlRepository, pathRepository)
+        #checkoutRepository(pathRepository, identifierDataset.IdCommit)
+        self.gr = GitRepository(self.pathRepository)
+
+    def calculateDataset(self):
+        pathsFile=glob.glob(self.pathRepository+"/**/*.java", recursive=True)
+        json_open=open(os.path.join(self.pathData, "annotationsReformatted.json"), 'r')
+        formattedAnnotations=json.load(json_open)
+
+        with tqdm(pathsFile,bar_format="{desc}: {percentage:3.0f}%|{bar:10}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}{postfix}]") as pbar:
+            for pathFile in pbar:
+                nameFile=os.path.basename(pathFile)
+                commits = self.gr.get_commits_modified_file(os.path.abspath(pathFile))
+                self.data.append([
+                    UtilityMetrics.calculateLOC(pathFile),
+                    UtilityMetrics.calculateAddLOC(self.gr,commits,nameFile),
+                    UtilityMetrics.calculateDelLOC(self.gr,commits,nameFile),
+                    UtilityMetrics.calculateChgNum(self.gr,commits,nameFile),
+                    UtilityMetrics.calculateFixChgNum(self.gr, commits, nameFile),
+                    UtilityMetrics.calculatePastBugNum(self.gr, commits, nameFile, formattedAnnotations),
+                    UtilityMetrics.calculateHCM(self.gr, commits, nameFile,formattedAnnotations),
+                    UtilityMetrics.calculateDevTotal(self.gr,commits,nameFile),
+                    UtilityMetrics.calculateDevMinor(self.gr,commits,nameFile),
+                    UtilityMetrics.calculateDevMajor(self.gr,commits,nameFile),
+                    UtilityMetrics.calculateOwnership(self.gr,commits,nameFile),
+                    UtilityMetrics.calculatePeriod(self.gr,commits,nameFile),
+                    UtilityMetrics.calculateAvgInterval(self.gr,commits,nameFile),
+                    UtilityMetrics.calculateMaxInterval(self.gr,commits,nameFile),
+                    UtilityMetrics.calculateMinInterval(self.gr,commits,nameFile),
+                    UtilityMetrics.calculateLogCoupNum(self.gr, commits, nameFile, formattedAnnotations),
+                    UtilityMetrics.calculateBugIntroNum(self.gr,commits,nameFile,formattedAnnotations),
+                    UtilityMetrics.calculateIsBuggy(self.gr,commits,nameFile, formattedAnnotations),
+                    pathFile
+                ]
+                )
+
+
+class UtilityMetrics:
+    @staticmethod
+    def get1():
         return 1
-    def calculateLOC(self, pathFile):
+    @staticmethod
+    def calculateLOC(pathFile):
         with open(pathFile, "r") as fr:
             return len(fr.readlines())
-    def calculateAddLOC(self, gr,commits,nameFile):
+    @staticmethod
+    def calculateAddLOC(gr,commits,nameFile):
         addLOC=0
         for commit in commits:
             for modification in gr.get_commit(commit).modifications:
                 if modification.filename==nameFile:
                     addLOC+=modification.added
         return addLOC
-    def calculateDelLOC(self, gr,commits,nameFile):
+    @staticmethod
+    def calculateDelLOC(gr,commits,nameFile):
         delLOC=0
         for commit in commits:
             for modification in gr.get_commit(commit).modifications:
                 if modification.filename==nameFile:
                     delLOC+=modification.removed
         return delLOC
-    def calculateChgNum(self, gr,commits,nameFile):
+    @staticmethod
+    def calculateChgNum(gr,commits,nameFile):
         return len(commits)
-    def calculateFixChgNum(self, gr, commits, nameFile):
+    @staticmethod
+    def calculateFixChgNum(gr, commits, nameFile):
         fixChgNum=0
         gitlog_pattern= r'(?<=CASSANDRA-)\d+|(?<=#)\d+'
         json_open = open('../dataset/trial/cassandra/IDsBug.json', 'r')
@@ -43,20 +116,23 @@ class File:
                     fixChgNum=fixChgNum+1
                     break
         return fixChgNum
-    def calculatePastBugNum(self, gr,commits, nameFile,formattedAnnotations):
+    @staticmethod
+    def calculatePastBugNum(gr,commits, nameFile,formattedAnnotations):
         pastBugNum=0
         for commit in commits:
             if(commit in formattedAnnotations):
                 if(nameFile in formattedAnnotations[commit]["fix"]):
                     pastBugNum=pastBugNum+1
         return pastBugNum
-    def calculatePeriod(self, gr, commits, nameFile):
+    @staticmethod
+    def calculatePeriod(gr, commits, nameFile):
         dates=[gr.get_head().author_date]
         for commit in commits:
             dates.append(gr.get_commit(commit).author_date)
         td=max(dates)-min(dates)
         return td.days
-    def calculateBugIntroNum(self, gr, commits, nameFile, formattedAnnotations):
+    @staticmethod
+    def calculateBugIntroNum(gr, commits, nameFile, formattedAnnotations):
         bugIntroNum=0
         for commit in commits:
             if(commit in formattedAnnotations):
@@ -65,7 +141,8 @@ class File:
                         bugIntroNum=bugIntroNum+1
                         break
         return bugIntroNum
-    def calculateLogCoupNum(self, gr, commits, nameFile, formattedAnnotations):
+    @staticmethod
+    def calculateLogCoupNum(gr, commits, nameFile, formattedAnnotations):
         logCoupNum=0
         for commit in commits:
             for modification in gr.get_commit(commit).modifications:
@@ -86,7 +163,8 @@ class File:
                     continue
                 break
         return logCoupNum
-    def calculateAvgInterval(self, gr,commits,nameFile):
+    @staticmethod
+    def calculateAvgInterval(gr,commits,nameFile):
         dates=[]
         ddates=[]
         for commit in commits:
@@ -95,10 +173,11 @@ class File:
         for i in range(len(dates)-1):
             ddates.append((dates[i+1]-dates[i]).days)
         if len(ddates)==0:
-            ddates.append(self.calculatePeriod(gr, commits, nameFile))
+            ddates.append(UtilityMetrics.calculatePeriod(gr, commits, nameFile))
         intervalAvg=statistics.mean(ddates)
         return intervalAvg
-    def calculateMaxInterval(self, gr,commits,nameFile):
+    @staticmethod
+    def calculateMaxInterval(gr,commits,nameFile):
         dates=[]
         ddates=[]
         for commit in commits:
@@ -107,10 +186,11 @@ class File:
         for i in range(len(dates)-1):
             ddates.append((dates[i+1]-dates[i]).days)
         if len(ddates)==0:
-            ddates.append(self.calculatePeriod(gr, commits, nameFile))
+            ddates.append(UtilityMetrics.calculatePeriod(gr, commits, nameFile))
         intervalMax=max(ddates)
         return intervalMax
-    def calculateMinInterval(self, gr,commits,nameFile):
+    @staticmethod
+    def calculateMinInterval(gr,commits,nameFile):
         dates=[]
         ddates=[]
         for commit in commits:
@@ -119,15 +199,17 @@ class File:
         for i in range(len(dates)-1):
             ddates.append((dates[i+1]-dates[i]).days)
         if len(ddates)==0:
-            ddates.append(self.calculatePeriod(gr, commits, nameFile))
+            ddates.append(UtilityMetrics.calculatePeriod(gr, commits, nameFile))
         intervalMin=min(ddates)
         return intervalMin
-    def calculateDevTotal(self, gr,commits,nameFile):
+    @staticmethod
+    def calculateDevTotal(gr,commits,nameFile):
         developers=[]
         for commit in commits:
             developers.append(gr.get_commit(commit).author.name)
         return len(set(developers))
-    def calculateDevMinor(self, gr,commits,nameFile):
+    @staticmethod
+    def calculateDevMinor(gr,commits,nameFile):
         devMinor=0
         developers=[]
         setDevelopers=[]
@@ -138,7 +220,8 @@ class File:
             if developers.count(developer)/len(developers)<0.2:
                 devMinor+=1
         return devMinor
-    def calculateDevMajor(self, gr,commits,nameFile):
+    @staticmethod
+    def calculateDevMajor(gr,commits,nameFile):
         devMajor=0
         developers=[]
         setDevelopers=[]
@@ -149,7 +232,8 @@ class File:
             if 0.2<developers.count(developer)/len(developers):
                 devMajor+=1
         return devMajor
-    def calculateOwnership(self, gr,commits,nameFile):
+    @staticmethod
+    def calculateOwnership(gr,commits,nameFile):
         ratio={}
         developers=[]
         setDevelopers=[]
@@ -159,7 +243,8 @@ class File:
         for developer in setDevelopers:
             ratio[developer]=developers.count(developer)/len(developers)
         return ratio[max(ratio)]
-    def calculateIsBuggy(self, gr,commits,nameFile, formattedAnnotations):
+    @staticmethod
+    def calculateIsBuggy(gr,commits,nameFile, formattedAnnotations):
         # そのめそっどについてのコミットをその版から遡って、"intro"が最後に来ている→その版でbuggy
         intro=0
         fix=0
@@ -170,14 +255,15 @@ class File:
                 if nameFile in formattedAnnotations[commit]["fix"]:
                     fix=fix+1
         return intro!=fix
-    def calculateHCM(self, gr,commits,nameFile, formattedAnnotations):
+    @staticmethod
+    def calculateHCM(gr,commits,nameFile, formattedAnnotations):
         def calculateH(probabilities):
             sum=0
             for probability in probabilities:
                 sum+=(probability*math.log2(probability))
             sum=sum/math.log2(len(probabilities))
             return -sum
-        def calculateHCPF(self, index, probabilities, type):
+        def calculateHCPF(index, probabilities, type):
             print(probabilities)
             if type==3:
                 return(1/len(probabilities))*calculateH(probabilities)

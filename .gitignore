@@ -3,3 +3,4 @@ model/
 dataset/
 .env
 InferBugs.code-workspace
+__pycache__/
