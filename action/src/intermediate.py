@@ -9,7 +9,6 @@ import datetime
 from src.dataset import Dataset, UtilityMetrics
 import subprocess
 
-
 def intermediate(nameExperiment, identifiersDataset, parameterTrain):
     for identifierDataset in identifiersDataset:
         pathData=os.path.join("../dataset",nameExperiment,identifierDataset["nameRepository"])

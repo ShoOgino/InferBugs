@@ -52,6 +52,7 @@ class Dataset:
             for pathFile in pbar:
                 nameFile=os.path.basename(pathFile)
                 commits = self.gr.get_commits_modified_file(os.path.abspath(pathFile))
+                print(pathFile)
                 self.data.append([
                     UtilityMetrics.calculateLOC(pathFile),
                     UtilityMetrics.calculateAddLOC(self.gr,commits,nameFile),
