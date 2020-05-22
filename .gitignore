@@ -1,6 +1,7 @@
-result/
-model/
-dataset/
+results/
+models/
+datasets/
+.vscode/
 .env
 InferBugs.code-workspace
 __pycache__/

@@ -1,5 +1,5 @@
 import unittest
-from src.dataset import UtilityMetrics
+from src.dataset import Metrics
 from pydriller import GitRepository, RepositoryMining, domain
 import os
 import json
@@ -12,20 +12,36 @@ class TestDataset(unittest.TestCase):
             self.df = json.load(f)
     def tearDown(self):
         pass
-
     def testCalculateLOC(self):
-        self.assertEqual(UtilityMetrics.get1(), 1)
+        pass
     def testCalculateAddLOC(self):
         pass
     def testCalculateDelLOC(self):
         pass
     def testCalculateChgNum(self):
-        for pathFile in self.df:
-            pathFile1=os.path.abspath("../dataset/trial/cassandra/cassandra/"+pathFile).replace("\\","/")
+        for key in self.df:
+            pathFile=os.path.abspath("../dataset/trial/cassandra/cassandra/"+key).replace("\\","/")
             with self.subTest(pathFile=pathFile):
                 nameFile=os.path.basename(pathFile)
-                print(nameFile)
-                self.assertEqual(str(UtilityMetrics.calculateChgNum(self.gr,self.gr.get_commits_modified_file(os.path.join(self.pathRepository,pathFile1)),nameFile)),self.df[pathFile]["chgNum"])
+                commits =[]
+                for commit in self.gr.get_commits_modified_file(os.path.abspath(pathFile)):
+                    for modification in self.gr.get_commit(commit).modifications:
+                        if (nameFile == modification.filename):
+                            print(modification.filename)
+                            print(modification.change_type)
+                            commits.append(commit)
+                            if (modification.change_type!=modification.change_type.MODIFY) and (modification.change_type!=modification.change_type.DELETE):
+                                break
+                    else:
+                        continue
+                    break
+                self.assertEqual(
+                    str(
+                        Metrics.calculateChgNum(
+                            self.gr,
+                            commits,
+                            nameFile)),
+                    self.df[key]["chgNum"])
         pass
     def testCalculateFixChgNum(self):
         pass
