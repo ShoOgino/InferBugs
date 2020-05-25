@@ -25,5 +25,5 @@ python demo.py
 ## Author
 - 作成者(E-mail) (所属)
 
-# License
+## License
 "" is under [MIT license](https://en.wikipedia.org/wiki/MIT_License).
