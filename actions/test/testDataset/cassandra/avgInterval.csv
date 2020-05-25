@@ -1,0 +1,3 @@
+0,"src/java/org/apache/cassandra/db/RowIteratorFactory#memtableEntryIterator(Memtable,DecoratedKey).mjava"
+1,"src/java/org/apache/cassandra/thrift/CassandraServer#system_rename_keyspace(String,String).mjava"
+344,"src/java/org/apache/cassandra/db/SuperColumn#value().mjava"

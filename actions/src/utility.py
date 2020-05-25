@@ -46,7 +46,7 @@ class UtilPath:
         return os.path.join(UtilPath.DatasetAction(nameExperiment),nameRepository)
     @staticmethod
     def Repository(nameExperiment, nameRepository):
-        return os.path.join(UtilPath.AboutRepository(nameExperiment,nameRepository),nameRepository)
+        return os.path.join(UtilPath.AboutRepository(nameExperiment,nameRepository),"repository")
     @staticmethod
     def Dataset(nameExperiment):
         return os.path.join(UtilPath.DatasetAction(nameExperiment),"dataset.json")
@@ -77,12 +77,11 @@ class UtilPath:
         return os.path.join(UtilPath.ResultAction(nameExperiment),"["+str(datetime.datetime.now().strftime("%Y%m%d%H%M%S"))+"]"+mode+"_result.csv")
 
 class Option:
-    def __init__(self, optionInputted):
-        self.option=optionInputted
-        self.name=self.option["name"]
-        self.mode=self.option["mode"]
-        self.repositories=self.option["repositories"]
-        self.parameters=self.option["parameters"]
+    def __init__(self, option):
+        self.name=option["name"]
+        self.mode=option["mode"]
+        self.repositories=option["repositories"]
+        self.parameters=option["parameters"]
 
     def getRepositorieImproved(self):
         for repository in self.repositories:

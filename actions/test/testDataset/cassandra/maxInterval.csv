@@ -1,0 +1,3 @@
+0,"src/java/org/apache/cassandra/db/RowIteratorFactory#memtableEntryIterator(Memtable,DecoratedKey).mjava"
+1,"src/java/org/apache/cassandra/service/StorageService#loadSchemaFromXML().mjava"
+344,"src/java/org/apache/cassandra/db/SuperColumn#value().mjava"

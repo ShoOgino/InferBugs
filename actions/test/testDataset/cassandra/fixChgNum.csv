@@ -1,0 +1,3 @@
+0,"interface/thrift/gen-java/org/apache/cassandra/thrift/Cassandra.describe_ring_args#setKeyspaceIsSet(boolean).mjava"
+1,"src/java/org/apache/cassandra/db/marshal/AbstractType#getColumnsString(Collection[IColumn]).mjava"
+7,"src/java/org/apache/cassandra/db/ColumnFamilyStore#getColumnFamily(QueryFilter,int).mjava"

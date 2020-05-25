@@ -15,47 +15,37 @@ class Dataset:
     def __init__(self, repositories):
         self.dataset=[]
         self.repositories=repositories
-
     def prepare(self):
         for repository in self.repositories:
-            datas=[]
+            datasetRepository=[]
             if(not os.path.exists(repository["path"])):
                 pass
                 #rawdata=Rawdata()
             gr = GitRepository(repository["path"])
-            pathsFile = [pathFile for pathFile in glob.glob(repository["path"]+"/**/*.java", recursive=True) if re.match(repository["filterFile"], pathFile)]
-
-            commitsBug={}#
-            annotations=json.load(open(repository["pathAnnotations"], 'r'))
-            for commit in annotations:
-                for i in range(len(annotations[commit])):
-                    if(not commit in commitsBug):
-                        commitsBug[commit]={"fix":[], "prefix":[], "intro":[]}
-                    commitsBug[commit]["fix"].append(annotations[commit][i]["filePath"])
-                    for revision in annotations[commit][i]["revisions"]:
-                        if(revision!=commit):
-                            if(not revision in commitsBug):
-                                 commitsBug[revision]={"fix":[], "intro":[]}
-                            commitsBug[revision]["intro"].append(annotations[commit][i]["filePath"])
+            pathsFile = [pathFile for pathFile in glob.glob(repository["path"]+"/**/*.mjava", recursive=True) if re.match(repository["filterFile"], pathFile)]
+            commitsBug=self.getCommitsBug(repository)
 
             with tqdm(pathsFile,bar_format="{desc}: {percentage:3.0f}%|{bar:10}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}{postfix}]") as pbar:
                 for pathFile in pbar:
                     nameFile=os.path.basename(pathFile)
-                    commits =[]
-                    for commit in gr.get_commits_modified_file(os.path.abspath(pathFile)):
-                        for modification in gr.get_commit(commit).modifications:
-                            if (nameFile == modification.filename):
-                                commits.append(commit)
-                                if (modification.change_type!=modification.change_type.MODIFY) and (modification.change_type!=modification.change_type.DELETE):
-                                    break
-                        else:
-                            continue
-                        break
-                    datas.append(Data(gr, pathFile, commits, commitsBug).getData())
-            self.dataset.extend(datas)
-            self.save(self.dataset)
-
-
+                    pbar.postfix=nameFile
+                    pbar.desc=repository["name"]
+                    datasetRepository.append(Data(gr, pathFile, commitsBug).getData())
+            self.dataset.extend(datasetRepository)
+    def getCommitsBug(self, repository):
+        commitsBug={}
+        annotations=json.load(open(repository["pathAnnotations"], 'r'))
+        for commit in annotations:
+            for i in range(len(annotations[commit])):
+                if(not commit in commitsBug):
+                    commitsBug[commit]={"fix":[], "prefix":[], "intro":[]} # prefix を追加
+                commitsBug[commit]["fix"].append(annotations[commit][i]["filePath"])
+                for revision in annotations[commit][i]["revisions"]:
+                    if(revision!=commit):
+                        if(not revision in commitsBug):
+                             commitsBug[revision]={"fix":[], "prefix":[], "intro":[]}
+                        commitsBug[revision]["intro"].append(annotations[commit][i]["filePath"])
+        return commitsBug
     def save(self, path):
         with open(path, 'a', newline="") as f:
             writer = csv.writer(f)
@@ -65,11 +55,22 @@ class Dataset:
     def visualize(self):
         pass
 class Data:
-    def __init__(self, gr, pathFile, commits, commitsBug):
+    def __init__(self, gr, pathFile, commitsBug):
         self.gr=gr
         self.pathFile=pathFile
         self.nameFile=os.path.basename(pathFile)
-        self.commits=commits
+        self.commits =[]
+        print(self.gr.get_commits_modified_file(self.pathFile))
+        for commit in self.gr.get_commits_modified_file(self.pathFile):
+            for modification in self.gr.get_commit(commit).modifications:
+                if (self.nameFile == modification.filename):
+                    self.commits.append(commit)
+                    print(modification.change_type)
+                    if (modification.change_type!=modification.change_type.MODIFY) and (modification.change_type!=modification.change_type.DELETE):
+                        break
+            else:
+                continue
+            break
         self.commitsBug=commitsBug
 
     def getData(self):
@@ -101,14 +102,14 @@ class Data:
         addLOC=0
         for commit in self.commits:
             for modification in self.gr.get_commit(commit).modifications:
-                if modification.filename==self.nameFile:
+                if (modification.filename==self.nameFile) and (modification.change_type==modification.change_type.MODIFY):
                     addLOC+=modification.added
         return addLOC
     def calculateDelLOC(self):
         delLOC=0
         for commit in self.commits:
             for modification in self.gr.get_commit(commit).modifications:
-                if modification.filename==self.nameFile:
+                if (modification.filename==self.nameFile) and (modification.change_type==modification.change_type.MODIFY):
                     delLOC+=modification.removed
         return delLOC
     def calculateChgNum(self):
@@ -198,6 +199,9 @@ class Data:
         developers=[]
         for commit in self.commits:
             developers.append(self.gr.get_commit(commit).author.name)
+            developers.append(self.gr.get_commit(commit).committer.name)
+            print("author   : "+self.gr.get_commit(commit).author.name)
+            print("committer: "+self.gr.get_commit(commit).committer.name)
         return len(set(developers))
     def calculateDevMinor(self):
         devMinor=0
@@ -205,6 +209,7 @@ class Data:
         setDevelopers=[]
         for commit in self.commits:
             developers.append(self.gr.get_commit(commit).author.name)
+            developers.append(self.gr.get_commit(commit).committer.name)
         setDevelopers=set(developers)
         for developer in setDevelopers:
             if developers.count(developer)/len(developers)<0.2:
@@ -216,6 +221,7 @@ class Data:
         setDevelopers=[]
         for commit in self.commits:
             developers.append(self.gr.get_commit(commit).author.name)
+            developers.append(self.gr.get_commit(commit).committer.name)
         setDevelopers=set(developers)
         for developer in setDevelopers:
             if 0.2<developers.count(developer)/len(developers):
