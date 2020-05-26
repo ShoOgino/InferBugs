@@ -1,0 +1,5 @@
+1,"src/main/org/apache/tools/bzip2/CBZip2InputStream#read(byte[],int,int).mjava"
+2,"src/main/org/apache/tools/ant/taskdefs/optional/extension/ExtensionSet#toString().mjava"
+85,"src/main/org/apache/tools/ant/taskdefs/Javadoc#execute().mjava"
+7,"src/main/org/apache/tools/ant/taskdefs/Execute.VmsCommandLauncher#createCommandFile(String[],String[]).mjava"
+5,src/main/org/apache/tools/ant/Diagnostics#doReportWhich(PrintStream).mjava

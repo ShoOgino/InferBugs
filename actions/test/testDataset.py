@@ -7,16 +7,16 @@ import json
 import csv
 class TestDataset(unittest.TestCase):
     def setUp(self):
-        name="trial"
+        name="ant"
         mode="train"
         repositories = [
             {
-                "name": "cassandra",
-                "url": "https://github.com/apache/cassandra.git",
-                "CommitTarget": "df724579efeee15a8974e83be07462a9574b8ae3",
-                "filterFile": "",#r".*src\\java\\org\\apache\\cassandra\\service\\WriteResponseHandler.java",
-                "codeIssueJira": "CASSANDRA",
-                "projectJira": "issues.apache.org/jira",
+                "name": "ant",
+                "url": "",
+                "CommitTarget": "7a9a739beced14de51a13bbf92e8f59b761b17f0",
+                "filterFile": "",
+                "codeIssueJira": "",
+                "projectJira": ""
             }
         ]
         parameters = {}
@@ -30,55 +30,56 @@ class TestDataset(unittest.TestCase):
 
         self.dataset=Dataset(option.getRepositorieImproved())
         self.repository=repositories[0]
-        self.gr = GitRepository(os.path.join(UtilPath.Test(), "testDataset/repository"))
+        self.gr = GitRepository(os.path.join(UtilPath.Test(), "testDataset",self.repository["name"] ,"repository"))
 
     def tearDown(self):
         pass
     def testCalculateLOC(self):
-        with open(os.path.join(UtilPath.Test(), "testDataset/loc.csv")) as f:
+        with open(os.path.join(UtilPath.Test(), "testDataset", self.repository["name"],"loc.csv")) as f:
             reader = csv.reader(f)
             datasTest = [row for row in reader]
         for dataTest in datasTest:
-            pathFile=os.path.join(UtilPath.Test(),"testDataset/repository/"+dataTest[1]).replace("\\","/")
+            pathFile=os.path.join(UtilPath.Test(),"testDataset", self.repository["name"],"repository",dataTest[1]).replace("\\","/")
             with self.subTest(pathFile=pathFile):
                 data=Data(self.gr, pathFile, self.dataset.getCommitsBug(self.repository))
                 self.assertEqual(data.calculateLOC(), int(dataTest[0]))
     def testCalculateAddLOC(self):
-        with open(os.path.join(UtilPath.Test(), "testDataset/addLoc.csv")) as f:
+        with open(os.path.join(UtilPath.Test(), "testDataset", self.repository["name"],"addLoc.csv")) as f:
             reader = csv.reader(f)
             datasTest = [row for row in reader]
         for dataTest in datasTest:
-            pathFile=os.path.join(UtilPath.Test(),"testDataset/repository/"+dataTest[1]).replace("\\","/")
+            pathFile=os.path.join(UtilPath.Test(),"testDataset", self.repository["name"],"repository",dataTest[1]).replace("\\","/")
             with self.subTest(pathFile=pathFile):
                 data=Data(self.gr, pathFile, self.dataset.getCommitsBug(self.repository))
                 self.assertEqual(data.calculateAddLOC(), int(dataTest[0]))
     def testCalculateDelLOC(self):
-        with open(os.path.join(UtilPath.Test(), "testDataset/delLoc.csv")) as f:
+        with open(os.path.join(UtilPath.Test(), "testDataset", self.repository["name"],"delLoc.csv")) as f:
             reader = csv.reader(f)
             datasTest = [row for row in reader]
         for dataTest in datasTest:
-            pathFile=os.path.join(UtilPath.Test(),"testDataset/repository/"+dataTest[1]).replace("\\","/")
+            pathFile=os.path.join(UtilPath.Test(),"testDataset", self.repository["name"],"repository",dataTest[1]).replace("\\","/")
             with self.subTest(pathFile=pathFile):
                 data=Data(self.gr, pathFile, self.dataset.getCommitsBug(self.repository))
                 self.assertEqual(data.calculateDelLOC(), int(dataTest[0]))
     def testCalculateChgNum(self):
-        with open(os.path.join(UtilPath.Test(), "testDataset/chgNum.csv")) as f:
+        with open(os.path.join(UtilPath.Test(), "testDataset", self.repository["name"],"chgNum.csv")) as f:
             reader = csv.reader(f)
             datasTest = [row for row in reader]
         for dataTest in datasTest:
-            pathFile=os.path.join(UtilPath.Test(),"testDataset/repository/"+dataTest[1]).replace("\\","/")
+            pathFile=os.path.join(UtilPath.Test(),"testDataset", self.repository["name"],"repository",dataTest[1]).replace("\\","/")
             with self.subTest(pathFile=pathFile):
-                self.assertEqual(Data(self.gr, pathFile, self.dataset.getCommitsBug(self.repository)).calculateChgNum(), int(dataTest[0]))
+                data=Data(self.gr, pathFile, self.dataset.getCommitsBug(self.repository))
+                self.assertEqual(data.calculateChgNum(), int(dataTest[0]))
     def testCalculateFixChgNum(self):
         pass
     def testCalculatePastBugNum(self):
         pass
     def testCalculatePeriod(self):
-        with open(os.path.join(UtilPath.Test(), "testDataset/period.csv")) as f:
+        with open(os.path.join(UtilPath.Test(), "testDataset", self.repository["name"],"period.csv")) as f:
             reader = csv.reader(f)
             datasTest = [row for row in reader]
         for dataTest in datasTest:
-            pathFile=os.path.join(UtilPath.Test(),"testDataset/repository/"+dataTest[1]).replace("\\","/")
+            pathFile=os.path.join(UtilPath.Test(),"testDataset", self.repository["name"],"repository",dataTest[1]).replace("\\","/")
             with self.subTest(pathFile=pathFile):
                 data=Data(self.gr, pathFile, self.dataset.getCommitsBug(self.repository))
                 self.assertEqual(data.calculatePeriod(), int(dataTest[0]))
@@ -93,33 +94,30 @@ class TestDataset(unittest.TestCase):
     def testCalculateMinInterval(self):
         pass
     def testCalculateDevTotal(self):
-        with open(os.path.join(UtilPath.Test(), "testDataset/devTotal.csv")) as f:
+        with open(os.path.join(UtilPath.Test(), "testDataset", self.repository["name"],"devTotal.csv")) as f:
             reader = csv.reader(f)
             datasTest = [row for row in reader]
         for dataTest in datasTest:
-            pathFile=os.path.join(UtilPath.Test(),"testDataset/repository/"+dataTest[1]).replace("\\","/")
+            pathFile=os.path.join(UtilPath.Test(),"testDataset", self.repository["name"],"repository",dataTest[1]).replace("\\","/")
             print(pathFile)
             with self.subTest(pathFile=pathFile):
                 data=Data(self.gr, pathFile, self.dataset.getCommitsBug(self.repository))
                 self.assertEqual(data.calculateDevTotal(), int(dataTest[0]))
     def testCalculateDevMinor(self):
-        with open(os.path.join(UtilPath.Test(), "testDataset/devMinor.csv")) as f:
+        with open(os.path.join(UtilPath.Test(), "testDataset", self.repository["name"],"devMinor.csv")) as f:
             reader = csv.reader(f)
             datasTest = [row for row in reader]
         for dataTest in datasTest:
-            pathFile=os.path.join(UtilPath.Test(),"testDataset/repository/"+dataTest[1]).replace("\\","/")
+            pathFile=os.path.join(UtilPath.Test(),"testDataset", self.repository["name"],"repository",dataTest[1]).replace("\\","/")
             with self.subTest(pathFile=pathFile):
                 data=Data(self.gr, pathFile, self.dataset.getCommitsBug(self.repository))
-                print(pathFile)
-                print(data.calculateDevTotal())
-                print(data.calculateDevMinor())
                 self.assertEqual(data.calculateDevMinor(), int(dataTest[0]))
     def testCalculateDevMajor(self):
-        with open(os.path.join(UtilPath.Test(), "testDataset/devMajor.csv")) as f:
+        with open(os.path.join(UtilPath.Test(), "testDataset", self.repository["name"],"devMajor.csv")) as f:
             reader = csv.reader(f)
             datasTest = [row for row in reader]
         for dataTest in datasTest:
-            pathFile=os.path.join(UtilPath.Test(),"testDataset/repository/"+dataTest[1]).replace("\\","/")
+            pathFile=os.path.join(UtilPath.Test(),"testDataset", self.repository["name"],"repository",dataTest[1]).replace("\\","/")
             with self.subTest(pathFile=pathFile):
                 data=Data(self.gr, pathFile, self.dataset.getCommitsBug(self.repository))
                 self.assertEqual(data.calculateDevMajor(), int(dataTest[0]))

@@ -60,17 +60,18 @@ class Data:
         self.pathFile=pathFile
         self.nameFile=os.path.basename(pathFile)
         self.commits =[]
-        print(self.gr.get_commits_modified_file(self.pathFile))
+        print(self.pathFile)
+        print(len(self.gr.get_commits_modified_file(self.pathFile)))
         for commit in self.gr.get_commits_modified_file(self.pathFile):
             for modification in self.gr.get_commit(commit).modifications:
                 if (self.nameFile == modification.filename):
                     self.commits.append(commit)
                     print(modification.change_type)
-                    if (modification.change_type!=modification.change_type.MODIFY) and (modification.change_type!=modification.change_type.DELETE):
-                        break
-            else:
-                continue
-            break
+                    #if (modification.change_type!=modification.change_type.MODIFY) and (modification.change_type!=modification.change_type.DELETE):
+                    #    break
+            #else:
+            #    continue
+            #break
         self.commitsBug=commitsBug
 
     def getData(self):
@@ -212,7 +213,7 @@ class Data:
             developers.append(self.gr.get_commit(commit).committer.name)
         setDevelopers=set(developers)
         for developer in setDevelopers:
-            if developers.count(developer)/len(developers)<0.2:
+            if ((developers.count(developer)/len(developers))<0.2):
                 devMinor+=1
         return devMinor
     def calculateDevMajor(self):
@@ -224,7 +225,7 @@ class Data:
             developers.append(self.gr.get_commit(commit).committer.name)
         setDevelopers=set(developers)
         for developer in setDevelopers:
-            if 0.2<developers.count(developer)/len(developers):
+            if (0.2<(developers.count(developer)/len(developers))):
                 devMajor+=1
         return devMajor
     def calculateOwnership(self):

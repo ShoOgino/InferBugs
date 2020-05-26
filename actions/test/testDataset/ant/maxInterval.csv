@@ -1,0 +1,3 @@
+0,src/main/org/apache/tools/ant/ExtensionPoint#addDataType(RuntimeConfigurable).mjava
+5,src/main/org/apache/tools/ant/types/resources/ResourceList#iterator().mjava
+3643,src/main/org/apache/tools/ant/taskdefs/Exec#setCommand(String).mjava

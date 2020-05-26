@@ -6,3 +6,6 @@ datasets/
 InferBugs.code-workspace
 __pycache__/
 repository/
+actions/test/testDataset/cassandra/cassandra
+actions/test/testDataset/MethodLevelBugPredictionDataset
+actions/test/testDataset/ant/ant
