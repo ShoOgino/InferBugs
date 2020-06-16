@@ -1,0 +1,4 @@
+loc,addLoc,delLoc,chgNum,fixChgNum,pastBugNum,hcm,devTotal,devMinor,devMajor,ownership,period,avgInterval,maxInterval,minInterval,LogCoupNum,BugIntroNum,isBuggy,path
+5,0,0,1,0,0,0.000172688,1,0,1,1.0,59,59,59,59,1,1,n,interface/thrift/gen-java/org/apache/cassandra/thrift/Cassandra.describe_ring_args#setKeyspaceIsSet(boolean).mjava
+7,1,1,2,1,1,0.000302066,1,0,1,1.0,262,131,176,85,2,0,n,src/java/org/apache/cassandra/db/marshal/AbstractType#getColumnsString(Collection<IColumn>).mjava
+19,13,51,28,7,4,0.002373328,2,1,1,0.9642857140000001,267,9,35,0,28,5,n,"src/java/org/apache/cassandra/db/ColumnFamilyStore#getColumnFamily(QueryFilter,int).mjava"

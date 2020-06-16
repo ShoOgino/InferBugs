@@ -1,0 +1,4 @@
+loc,addLoc,delLoc,chgNum,fixChgNum,pastBugNum,hcm,devTotal,devMinor,devMajor,ownership,period,avgInterval,maxInterval,minInterval,LogCoupNum,BugIntroNum,isBuggy,path
+5,0,0,1,0,0,0.000172688,1,0,1,1.0,59,59,59,59,1,1,n,interface/thrift/gen-java/org/apache/cassandra/thrift/Cassandra.describe_ring_args#setKeyspaceIsSet(boolean).mjava
+17,0,0,1,0,0,0.00015448100000000001,1,0,1,1.0,2,2,2,2,0,0,y,"src/java/org/apache/cassandra/db/migration/RenameKeyspace#renameKsStorageFiles(String,String).mjava"
+17,0,0,1,0,0,0.00015448100000000001,1,0,1,1.0,2,2,2,2,0,0,y,"src/java/org/apache/cassandra/db/migration/RenameKeyspace#renameKsStorageFiles(String,String).mjava"

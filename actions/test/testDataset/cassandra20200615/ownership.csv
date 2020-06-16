@@ -1,0 +1,4 @@
+loc,addLoc,delLoc,chgNum,fixChgNum,pastBugNum,hcm,devTotal,devMinor,devMajor,ownership,period,avgInterval,maxInterval,minInterval,LogCoupNum,BugIntroNum,isBuggy,path
+47,19,7,4,0,0,0.000374851,4,0,4,0.25,76,19,60,2,1,1,n,src/java/org/apache/cassandra/tools/ClusterCmd#main(String[]).mjava
+8,4,5,6,1,1,0.00084957,4,2,2,0.333333333,124,20,63,2,6,3,y,src/java/org/apache/cassandra/service/AntiEntropyService.Validator#call().mjava
+5,0,0,1,0,0,0.000172688,1,0,1,1.0,59,59,59,59,1,1,n,interface/thrift/gen-java/org/apache/cassandra/thrift/Cassandra.describe_ring_args#setKeyspaceIsSet(boolean).mjava

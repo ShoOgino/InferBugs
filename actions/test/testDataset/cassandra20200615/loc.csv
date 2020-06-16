@@ -1,0 +1,4 @@
+loc,addLoc,delLoc,chgNum,fixChgNum,pastBugNum,hcm,devTotal,devMinor,devMajor,ownership,period,avgInterval,maxInterval,minInterval,LogCoupNum,BugIntroNum,isBuggy,path
+1,0,0,1,0,0,0.000109381,1,0,1,1.0,241,241,241,241,1,1,n,src/java/org/apache/cassandra/db/IColumnContainer#addColumn(IColumn).mjava
+2,0,0,1,0,0,0.00028352200000000003,1,0,1,1.0,69,69,69,69,1,0,n,interface/thrift/gen-java/org/apache/cassandra/thrift/NotFoundException#validate().mjava
+183,30,7,5,0,0,0.000317799,3,0,3,0.6,76,15,57,0,2,0,n,src/java/org/apache/cassandra/tools/NodeCmd#main(String[]).mjava
