@@ -1,3 +1,4 @@
 src = "actions/src"
 lang = "python"
 clone_detector = "scc"
+granularity="method"
