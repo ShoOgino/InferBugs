@@ -81,6 +81,7 @@ class Data:
         #print("selected commits")
         print("commits: "+str(len(self.commits)))
         self.commitsBug=commitsBug
+        print("-----------------------------------------------")
     def getData(self):
         return [
             self.calculateLOC(),
