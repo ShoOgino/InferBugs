@@ -289,3 +289,16 @@ class Data:
                 return(1/len(probabilities))*calculateH(probabilities)
             else:
                 Exception()
+    def calculateHCMcopy(self):
+        def calculateH(probabilities):
+            sum=0
+            for probability in probabilities:
+                sum+=(probability*math.log2(probability))
+            sum=sum/math.log2(len(probabilities))
+            return -sum
+        def calculateHCPF(index, probabilities, type):
+            print(probabilities)
+            if type==3:
+                return(1/len(probabilities))*calculateH(probabilities)
+            else:
+                Exception()
