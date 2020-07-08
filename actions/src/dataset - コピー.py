@@ -8,6 +8,7 @@ import math
 import statistics
 from tqdm import tqdm
 
+import pprint
 import datetime
 import re
 
@@ -58,29 +59,35 @@ class Data:
     def __init__(self, gr, pathFile, commitsBug):
         self.gr=gr
         self.pathFile=pathFile
-        self.nameFile=os.path.basename(pathFile)
-        self.commits=[]
-        commits=self.gr.get_commits_modified_file(self.pathFile)
-        print("-----------------------------------------------")
         print(pathFile)
-        #print("all commits")
-        #print(commits)
-        pathTmp=pathFile
-        with open("log", mode='a') as f:
-            for commit in commits:
-                for modification in self.gr.get_commit(commit).modifications:
-                    if (pathTmp == modification.new_path):
-                        if (modification.change_type==modification.change_type.MODIFY) or (modification.change_type==modification.change_type.ADD):
-                            print(commit)
-                            print(modification.change_type)
-                            print(modification.old_path)
-                            self.commits.append(commit)
-                            #if modification.change_type==modification.change_type.ADD:
-                            #    break
-                        pathTmp=modification.old_path
-        #print("selected commits")
-        print("commits: "+str(len(self.commits)))
+        self.nameFile=os.path.basename(pathFile)
+        self.commits =[]
+        commits=self.gr.get_commits_modified_file(self.pathFile)
+        pathNew=self.pathFile
+        for commit in commits:
+            for modification in self.gr.get_commit(commit).modifications:
+                if (pathNew == modification.new_path):
+                    print(modification.change_type)
+                    self.commits.append(commit)
+                    pathNew=modification.old_path
+        #with open("log", mode='a') as f:
+        #    for commit in commits:
+        #        #f.write(str(commit)+"\n")
+        #        for modification in self.gr.get_commit(commit).modifications:
+        #            #f.write("    "+str(modification.filename)+"\n")
+        #            if (self.pathFile == modification.new_path):
+        #                #f.write("    "+str(modification.filename)+"\n")
+        #                #f.write("    "+str(modification.new_path)+"\n")
+        #                print(modification.change_type)
+        #                self.commits.append(commit)
+        #                #if (modification.change_type!=modification.change_type.MODIFY) and (modification.    change_type!=modification.change_type.DELETE):
+        #                #break
+        #        #else:
+        #        #    continue
+        #        #break
+        print(self.commits)
         self.commitsBug=commitsBug
+
     def getData(self):
         return [
             self.calculateLOC(),
@@ -107,22 +114,37 @@ class Data:
         LOC=0
         with open(self.pathFile, "r") as fr:
             lines=fr.read().splitlines()
+            lastIsIf=False
             for i, line in enumerate(lines):
-                #patternLineIgnore="^(\s*{\s*|\s*|\s*//.*|\s*case.*)$"
-                patternLineIgnore="^(\s*|\s*//.*)$"
+                #print(str(i)+line)
+                patternLineIgnore="^(\s*{\s*|\s*|\s*//.*|\s*case.*|\s*@Override.*|\s*@Deprecated.*)$"
+                patternIf="^\s*if\s+[^\{]*$"
+                patternBlock="^\s{.*$"
+                if lastIsIf:
+                    if re.match(patternBlock,line):
+                        LOC=LOC+1
+                    else:
+                        if re.match(patternIf,line):
+                            lastIsIf=True
+                        else:
+                            lastIsIf=False
+                            continue
+                if re.match(patternIf,line):
+                    lastIsIf=True
+                else:
+                    lastIsIf=False
                 if re.match(patternLineIgnore,line):
                     continue
+                print(str(i)+line)
                 LOC=LOC+1
         return LOC
     def calculateAddLOC(self):
         addLOC=0
-        pathTmp=self.pathFile
         for commit in self.commits:
             for modification in self.gr.get_commit(commit).modifications:
-                if self.pathFile == modification.new_path:
-                    if modification.change_type==modification.change_type.MODIFY:
-                        addLOC+=modification.added
-                    pathTmp=modification.old_path
+                if (self.pathFile == modification.new_path) and (modification.change_type==modification.change_type.MODIFY):
+                    pprint.pprint(modification.diff_parsed)
+                    addLOC+=modification.added
         return addLOC
     def calculateDelLOC(self):
         delLOC=0
@@ -130,10 +152,17 @@ class Data:
             for modification in self.gr.get_commit(commit).modifications:
                 if (modification.filename==self.nameFile) and (modification.change_type==modification.change_type.MODIFY):
                     delLOC+=modification.removed
-        print("test")
         return delLOC
     def calculateChgNum(self):
-        return len(self.commits)
+        chgnum=1
+        for commit in self.commits:
+            for modification in self.gr.get_commit(commit).modifications:
+                if (self.pathFile == modification.new_path) and (modification.change_type==modification.change_type.MODIFY):
+                    print(commit)
+                    print(modification.filename)
+                    print(modification.change_type)
+                    chgnum=chgnum+1
+        return chgnum
     def calculateFixChgNum(self):
         pass
     def calculatePastBugNum(self):
@@ -180,17 +209,17 @@ class Data:
                 break
         return logCoupNum
     def calculateAvgInterval(self):
-        #dates=[]
-        #ddates=[]
-        #for commit in self.commits:
-        #    dates.append(self.gr.get_commit(commit).author_date)
-        #dates.sort()
-        #for i in range(len(dates)-1):
-        #    ddates.append((dates[i+1]-dates[i]).days)
-        #if len(ddates)==0:
-        #    ddates.append(self.calculatePeriod())
-        #intervalAvg=statistics.mean(ddates)
-        return self.calculatePeriod()//self.calculateChgNum()
+        dates=[]
+        ddates=[]
+        for commit in self.commits:
+            dates.append(self.gr.get_commit(commit).author_date)
+        dates.sort()
+        for i in range(len(dates)-1):
+            ddates.append((dates[i+1]-dates[i]).days)
+        if len(ddates)==0:
+            ddates.append(self.calculatePeriod())
+        intervalAvg=statistics.mean(ddates)
+        return intervalAvg
     def calculateMaxInterval(self):
         dates=[]
         ddates=[]
@@ -219,7 +248,9 @@ class Data:
         developers=[]
         for commit in self.commits:
             developers.append(self.gr.get_commit(commit).author.name)
+            developers.append(self.gr.get_commit(commit).committer.name)
             print("author   : "+self.gr.get_commit(commit).author.name)
+            print("committer: "+self.gr.get_commit(commit).committer.name)
         return len(set(developers))
     def calculateDevMinor(self):
         devMinor=0
@@ -227,7 +258,7 @@ class Data:
         setDevelopers=[]
         for commit in self.commits:
             developers.append(self.gr.get_commit(commit).author.name)
-            print("author   : "+self.gr.get_commit(commit).author.name)
+            developers.append(self.gr.get_commit(commit).committer.name)
         setDevelopers=set(developers)
         for developer in setDevelopers:
             if ((developers.count(developer)/len(developers))<0.2):
@@ -239,10 +270,10 @@ class Data:
         setDevelopers=[]
         for commit in self.commits:
             developers.append(self.gr.get_commit(commit).author.name)
-            print("author   : "+self.gr.get_commit(commit).author.name)
+            developers.append(self.gr.get_commit(commit).committer.name)
         setDevelopers=set(developers)
         for developer in setDevelopers:
-            if (0.2<=(developers.count(developer)/len(developers))):
+            if (0.2<(developers.count(developer)/len(developers))):
                 devMajor+=1
         return devMajor
     def calculateOwnership(self):
