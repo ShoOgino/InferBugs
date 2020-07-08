@@ -124,6 +124,7 @@ class Data:
                 if re.match(patternLineIgnore,line):
                     continue
                 LOC=LOC+1
+        print("test")
         return LOC
     def calculateAddLOC(self):
         addLOC=0
