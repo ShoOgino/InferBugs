@@ -114,6 +114,18 @@ class Data:
                     continue
                 LOC=LOC+1
         return LOC
+    def calculateLOCcopy(self):
+        LOC=0
+        with open(self.pathFile, "r") as fr:
+            lines=fr.read().splitlines()
+            for i, line in enumerate(lines):
+                #patternLineIgnore="^(\s*{\s*|\s*|\s*//.*|\s*case.*)$"
+                patternLineIgnore="^(\s*|\s*//.*)$"
+                if re.match(patternLineIgnore,line):
+                    continue
+                LOC=LOC+1
+        print("test")
+        return LOC
     def calculateAddLOC(self):
         addLOC=0
         pathTmp=self.pathFile
@@ -267,6 +279,19 @@ class Data:
                     fix=fix+1
         return intro!=fix
     def calculateHCM(self):
+        def calculateH(probabilities):
+            sum=0
+            for probability in probabilities:
+                sum+=(probability*math.log2(probability))
+            sum=sum/math.log2(len(probabilities))
+            return -sum
+        def calculateHCPF(index, probabilities, type):
+            print(probabilities)
+            if type==3:
+                return(1/len(probabilities))*calculateH(probabilities)
+            else:
+                Exception()
+    def calculateHCMcopy(self):
         def calculateH(probabilities):
             sum=0
             for probability in probabilities:
