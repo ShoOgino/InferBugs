@@ -20,27 +20,28 @@ def standardize(datasTrain,datasTest):
             features[i].append(float(data[indexRow]))
         mean=np.array(features[i]).mean()
         std=np.std(features[i])
-        if(i==10):
-            mean=1
-            std=1
         for data in datasTrain:
             data[indexRow]=(float(data[indexRow])-mean)/std
         for data in datasTest:
             data[indexRow]=(float(data[indexRow])-mean)/std
 
-pathTrain="../../datasets/cassandra/1/1.0.csv"
-pathTest="../../datasets/cassandra/2/2.0.csv"
+pathsTrain= [
+    "../../datasets/cassandra/1.csv",
+    "../../datasets/cassandra/2.csv"
+    ]
+pathTest="../../datasets/cassandra/3.csv"
 datasTrain=[]
 datasValid=[]
 datasTest=[]
-with open(pathTrain, encoding="utf_8") as f:
-    reader = csv.reader(f)
-    datasTrain=[row for row in reader]
+for pathTrain in pathsTrain:
+    with open(pathTrain, encoding="utf_8") as f:
+        reader = csv.reader(f)
+        datasTrain.extend([row for row in reader])
 with open(pathTest, encoding="utf_8") as f:
     reader = csv.reader(f)
-    datasTest =[row for row in reader]
+    datasTest.extend([row for row in reader])
 standardize(datasTrain, datasTest)
-with open('../../datasets/cassandra/2/test.csv' , 'w', newline="") as streamFileTest:
+with open('../../datasets/cassandra/test.csv' , 'w', newline="") as streamFileTest:
     writer = csv.writer(streamFileTest)
     writer.writerows(datasTest)
 
@@ -67,9 +68,9 @@ for i in range(5):
     datasTrain.extend(copy.deepcopy(datasNotBuggy[:(len(datasNotBuggy)//5)*i]+datasNotBuggy[(len(datasNotBuggy)//5)*(i+1):]))
     random.shuffle(datasTrain)
     random.shuffle(datasValid)
-    with open('../../datasets/cassandra/1/valid'+str(i)+'.csv' , 'w', newline="") as streamFileValid:
+    with open('../../datasets/cassandra/valid'+str(i)+'.csv' , 'w', newline="") as streamFileValid:
         writer = csv.writer(streamFileValid)
         writer.writerows(datasValid)
-    with open('../../datasets/cassandra/1/train'+str(i)+'.csv' , 'w', newline="") as streamFileTrain:
+    with open('../../datasets/cassandra/train'+str(i)+'.csv' , 'w', newline="") as streamFileTrain:
         writer = csv.writer(streamFileTrain)
         writer.writerows(datasTrain)

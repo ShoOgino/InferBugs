@@ -1,7 +1,8 @@
+import keras
+from keras.optimizers import Adam
 from numpy import mean
 from numpy import std
 from numpy import dstack
-from pandas import read_csv
 from keras.models import Sequential
 from keras.layers import Dense
 from keras.layers import Flatten
@@ -9,31 +10,26 @@ from keras.layers import Dropout
 from keras.layers import LSTM,GRU,BatchNormalization,Activation
 from keras.layers import Masking
 from keras.utils import to_categorical
-from matplotlib import pyplot
-import argparse
 import os
 import glob
 import csv
 import numpy as np
 import random
-import keras
-import matplotlib.pyplot as plt
 import csv
 import json
-csv.field_size_limit(1000000000)
-from keras import backend as k
-np.set_printoptions(threshold=np.inf)
+import matplotlib.pyplot as plt
 
-dirModel="..\\..\\models"
+
+dirModel="../../models"
 dirDataset="../../datasets"
 dirResults="../../results"
 
 # load the dataset, returns train and test x and y elements
-def load_dataset(purpose="", nameProject='', release=1, indexCV=0):
+def load_dataset(purpose="", nameProject='', indexCV=0):
     if purpose=="build":
         dataTrain=[[],[],[]]
         dataValid=[[],[],[]]
-        with open(os.path.join(dirDataset,nameProject,str(release),"train"+str(indexCV)+".csv")) as f:
+        with open(os.path.join(dirDataset,nameProject,"train"+str(indexCV)+".csv")) as f:
             train = csv.reader(f)
             for i,row in enumerate(train):
                 #print(item["id"])
@@ -44,7 +40,7 @@ def load_dataset(purpose="", nameProject='', release=1, indexCV=0):
             dataTrain[2]=np.array(dataTrain[2])
             print(dataTrain[1].shape)
             print(dataTrain[2].shape)
-        with open(os.path.join(dirDataset,nameProject,str(release),"valid"+str(indexCV)+".csv")) as f:
+        with open(os.path.join(dirDataset,nameProject,"valid"+str(indexCV)+".csv")) as f:
             valid = csv.reader(f)
             for i,row in enumerate(valid):
                 dataValid[0].append(row[0])
@@ -57,7 +53,7 @@ def load_dataset(purpose="", nameProject='', release=1, indexCV=0):
         return dataTrain[1], dataTrain[2], dataValid[1], dataValid[2]
     elif purpose=="test":
         dataTest=[[],[],[]]
-        with open(os.path.join(dirDataset,nameProject,str(release+1),"test.csv")) as f:
+        with open(os.path.join(dirDataset,nameProject,"test.csv")) as f:
             test = csv.reader(f)
             for i,row in enumerate(test):
                 dataTest[0].append(row[0])
@@ -70,7 +66,7 @@ def load_dataset(purpose="", nameProject='', release=1, indexCV=0):
         return dataTest[1],dataTest[2]
     elif purpose=="predict":
         dataTest=[[],[]]
-        with open(os.path.join(dirDataset,nameProject,str(release+1),"test.csv")) as f:
+        with open(os.path.join(dirDataset,nameProject,"test.csv")) as f:
             test = csv.reader(f)
             for i,row in enumerate(test):
                 dataTest[0].append(row[0])
@@ -79,69 +75,95 @@ def load_dataset(purpose="", nameProject='', release=1, indexCV=0):
         print(dataTest[1].shape)
         return dataTest[1]
 
-class TestCallback(keras.callbacks.Callback):
-    def __init__(self, xValid, yValid,batchSize,resultsValid,indexCV):
-        self.lossBest=1000000
-        self.xValid = xValid
-        self.yValid = yValid
-        self.resultsValid=resultsValid
-        self.batchSize=batchSize
-        self.indexCV=indexCV
-    def on_epoch_end(self, epoch, logs={}):
-        xs, ys = self.xValid, self.yValid
-        loss, mae = self.model.evaluate(xs, ys,batch_size=self.batchSize,verbose=0)
-        ysPredicted=self.model.predict(xs)
-        count=0
-        for i in range(len(ys)):
-            if abs(ys[i]-ysPredicted[i])<0.5:
-                count=count+1
-        acc=count/len(xs)
-
-        self.resultsValid["loss"].append(loss)
-        self.resultsValid["mae"].append(mae)
-        self.resultsValid["acc"].append(acc)
-        print('Validation loss: {}, mae: {}, acc: {}'.format(loss, mae, acc))
-        if loss<self.lossBest:
-            print("lossBest!: {}".format(loss))
-            #self.model.save(str(loss)+'.h5', include_optimizer=False)
-            self.lossBest=loss
+#class TestCallback(keras.callbacks.Callback):
+#    def __init__(self, xValid, yValid,batchSize,resultsValid,indexCV):
+#        self.lossBest=1000000
+#        self.xValid = xValid
+#        self.yValid = yValid
+#        self.resultsValid=resultsValid
+#        self.batchSize=batchSize
+#        self.indexCV=indexCV
+#    def on_epoch_end(self, epoch, logs={}):
+#        xs, ys = self.xValid, self.yValid
+#        loss, mae = self.model.evaluate(xs, ys,batch_size=self.batchSize,verbose=0)
+#        ysPredicted=self.model.predict(xs)
+#        count=0
+#        for i in range(len(ys)):
+#            if abs(ys[i]-ysPredicted[i])<0.5:
+#                count=count+1
+#        acc=count/len(xs)
+#
+#        self.resultsValid["loss"].append(loss)
+#        self.resultsValid["mae"].append(mae)
+#        self.resultsValid["acc"].append(acc)
+#        print('Validation loss: {}, mae: {}, acc: {}'.format(loss, mae, acc))
+#        if loss<self.lossBest:
+#            print("lossBest!: {}".format(loss))
+#            self.model.save(os.path.join(dirModel,nameProject,str(loss)+'.h5'), #include_optimizer=False)
+#            self.lossBest=loss
 
 
 # fit and evaluate a model
 def build(xTrain, yTrain, xValid, yValid, indexCV=0):
     resultsValid={"loss":[],"mae":[], "acc":[],"detail":[[]]}
-    verbose, epochs, batch_size = 2, 70, 64
+    verbose, epochs, batch_size = 2, 1000, 128
     n_features, n_outputs = xTrain.shape[1], 1
 
     model = Sequential()
-    model.add(Dense(32, activation="relu"))
+    model.add(Dense(128, activation="relu"))
     model.add(Dropout(0.2))
-    model.add(Dense(16, activation="relu"))
+    model.add(Dense(128, activation="relu"))
     model.add(Dropout(0.2))
-    model.add(Dense(8, activation="relu"))
+    model.add(Dense(128, activation="relu"))
     model.add(Dropout(0.2))
-    model.add(Dense(n_outputs,activation='linear'))
+    model.add(Dense(n_outputs,activation='sigmoid'))
 
-    adam=keras.optimizers.adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-07, decay=0.0)
+    adam=keras.optimizers.Adam(lr=0.01, beta_1=0.9, beta_2=0.999, epsilon=1e-07, decay=0.0)
     model.build((None,n_features))
-    model.compile(loss='mse', optimizer=adam, metrics=['mean_absolute_error'])
+    model.compile(loss='binary_crossentropy', optimizer=adam, metrics=['acc'])
     model.summary()
 
-    history=model.fit(xTrain, yTrain, epochs=epochs, batch_size=batch_size, verbose=verbose,callbacks=[TestCallback(xValid, yValid, batch_size, resultsValid, indexCV)])
-    
-    model.save(os.path.join(dirModel,nameProject,"latest.h5"), include_optimizer=False)
+    earlyStopping=keras.callbacks.EarlyStopping(monitor='val_loss', min_delta=0, patience=50, verbose=0, mode='auto')
+    history=model.fit(xTrain, yTrain, epochs=epochs, batch_size=batch_size, verbose=verbose, validation_data=(xValid, yValid))#callbacks=[earlyStopping])#,callbacks=[TestCallback(xValid, yValid, batch_size, resultsValid, indexCV)])
+    model.save(os.path.join(dirModel,nameProject,'latest.h5'), include_optimizer=False)
+
+    compare_TV(history)
 
     return model
 
+def compare_TV(history):
+
+    # Setting Parameters
+    acc = history.history['acc']
+    val_acc = history.history['val_acc']
+    loss = history.history['loss']
+    val_loss = history.history['val_loss']
+
+    epochs = range(len(acc))
+
+    # 1) Accracy Plt
+    fig = plt.figure()
+    plt.ylim(0, 2)
+    plt.plot(epochs, loss, 'b' ,label = 'lossTrain')
+    plt.plot(epochs, acc, 'bo' ,label = 'accTrain')
+    plt.title('Training and Validation acc')
+    plt.legend()
+
+    plt.plot(epochs, val_loss, 'r' , label= 'lossVal')
+    plt.plot(epochs, val_acc, 'ro' , label= 'accVal')
+    plt.title('Training and Validation loss')
+    plt.legend()
+
+    fig.savefig("result.png")
 
 def predict(nameProject, nameModel, xTest):
-    model = keras.models.load_model(os.path.join(dirModel,nameProject,nameModel), compile=False)
+    model = keras.models.load_model(os.path.join(dirModel,nameProject,nameModel))
     for x in xTest:
         model.predict(x)
 
 
 def test(nameProject, nameModel, xTest, yTest):
-    model = keras.models.load_model(os.path.join(dirModel,nameProject,nameModel), compile=False)
+    model = keras.models.load_model(os.path.join(dirModel,nameProject,nameModel))
     count=0
     ysPredicted=model.predict(xTest)
     tp=0
@@ -149,37 +171,46 @@ def test(nameProject, nameModel, xTest, yTest):
     fn=0
     tn=0
     for i, yPredicted in enumerate(ysPredicted):
-        if(0.5<yPredicted):
-            if(0.5<yTest[i]):
+        if(0.5<=yPredicted):
+            if(yTest[i]==1):
                 tp+=1
-            elif(yTest[i]<0.5):
+            elif(yTest[i]==0):
                 fp+=1
-        else:
-            if(0.5<yTest[i]):
+        elif(yPredicted<0.5):
+            if(yTest[i]==1):
                 fn+=1
-            elif(yTest[i]<0.5):
+            elif(yTest[i]==0):
                 tn+=1
-    print("precision: " + str(tp/(tp+fp)))
-    print("recall: " + str(tp/(tp+fn)))
+    precision=tp/(tp+fp)
+    recall=tp/(tp+fn)
+    fValue=(2*(recall*precision))/(recall+precision)
+    acc=(tp+tn)/(tp+fp+tn+fn)
+    print(str(tp)+", "+str(fp)+", "+str(fn)+", "+str(tn))
     print("acc: "+ str((tp+tn)/(tp+fp+tn+fn)))
+    print("precision: " + str(precision))
+    print("recall: " + str(recall))
+    print("F-value: "+ str(fValue))
 
 
-def run(purpose="build", nameProject="", release=1, nameModel="", indexCV=0):
+
+def run(purpose="build", nameProject="", nameModel="", indexCV=2):
     if purpose=="build":
-        xTrain, yTrain, xValid, yValid = load_dataset(purpose, nameProject, release, indexCV)
+        xTrain, yTrain, xValid, yValid = load_dataset(purpose, nameProject, indexCV)
         model=build(xTrain, yTrain, xValid, yValid, indexCV)
-        xTest, yTest=load_dataset("test", nameProject, release, indexCV)
+        xTest, yTest=load_dataset("test", nameProject, indexCV)
         test(nameProject, nameModel, xTest, yTest)
     elif purpose=="test":
-        xTest, yTest=load_dataset(purpose, nameProject, release, indexCV)
+        xTest, yTest=load_dataset(purpose, nameProject, indexCV)
         test(nameProject, nameModel, xTest, yTest)
     elif purpose=="predict":
-        xTest, yTest = load_dataset(purpose, nameProject, release, indexCV)
+        xTest, yTest = load_dataset(purpose, nameProject, indexCV)
         predict(nameModel, xTest)
 
 
 if __name__ == '__main__':
     purpose="build"
+    #purpose="test"
     nameModel="latest.h5"
+    #nameModel="0.1734926402568817.h5"
     nameProject="cassandra"
-    run(purpose, nameProject, 1, nameModel, 0)
+    run(purpose, nameProject, nameModel, 0)
