@@ -23,23 +23,27 @@ from sklearn.metrics import confusion_matrix
 import optuna
 from statistics import mean
 from sklearn.metrics import mean_squared_error
+from imblearn.over_sampling import SMOTE
+from imblearn.over_sampling import RandomOverSampler
 
 losssTrain=[]
 losssValid=[]
 
 def objective(trial):
     params = {
-        'n_estimators': trial.suggest_int('n_estimators', 2, 16),
-        'max_depth': trial.suggest_int('max_depth', 2,  16),
-        'min_samples_leaf': trial.suggest_int('min_samples_leaf', 2, 16),
-        'min_samples_split': trial.suggest_int('min_samples_split', 2, 16),
-        'random_state':trial.suggest_int('random_state', 0, 16)
+        'n_estimators': trial.suggest_int('n_estimators', 4, 64),
+        'max_depth': trial.suggest_int('max_depth', 4,  64),
+        'min_samples_leaf': trial.suggest_int('min_samples_leaf', 4, 64),
+        'min_samples_split': trial.suggest_int('min_samples_split', 4, 64),
+        'random_state':42
     }
     model = RandomForestClassifier(**params)
     lt=[]
     lv=[]
     for indexCV in range(5):
         xTrain, yTrain, xValid, yValid = load_dataset("build", "cassandra", indexCV)
+        ros = RandomOverSampler(random_state = 71)
+        xTrain, yTrain = ros.fit_sample(xTrain, yTrain)
         model.fit(xTrain, yTrain)
         lossTrain = mean_squared_error(yTrain, model.predict(xTrain))
         lossValid = mean_squared_error(yValid, model.predict(xValid))
@@ -268,11 +272,70 @@ def getParametersHyperTrainingBest(xTrain, yTrain, xValid, yValid):
     #print(parametersBest)
     return parametersBest, accuracyBest
 
-def main():
+def getParametersHyperBest0():
     study = optuna.create_study()
-    study.optimize(objective, timeout=60)
+    study.optimize(objective, timeout=60*10)
     print('params:', study.best_params)
     visualizeResult()
+
+def test0(parameters):
+    xTrain, yTrain, xValid, yValid=load_dataset("build", "cassandra", 0)
+    ros = RandomOverSampler(random_state = 71)
+    xTrain, yTrain = ros.fit_sample(xTrain, yTrain)
+    #sm = SMOTE(ratio={0:len(xTrain), 1:len(yTrain)}, random_state=42)
+    #xTrain, yTrain = sm.fit_resample(xTrain, yTrain)
+    print("xTrain: "+str(len(xTrain)))
+    print("yTrain: "+str(len(yTrain)))
+    model=RandomForestClassifier(
+        n_estimators=parameters["n_estimators"],
+        max_depth=parameters["max_depth"],
+        min_samples_leaf=parameters["min_samples_leaf"],
+        min_samples_split=parameters["min_samples_split"],
+        random_state=parameters["random_state"]
+    )
+    model.fit(np.concatenate([xTrain,xValid]), np.concatenate([yTrain, yValid]))
+    xTest, yTest=load_dataset("test", "cassandra")
+
+    ysPredicted=model.predict(xTest)
+    tp=0
+    fp=0
+    fn=0
+    tn=0
+    count=0
+    for i, yPredicted in enumerate(ysPredicted):
+        if(0.5<=yPredicted):
+            count=count+1
+            if(yTest[i]==1):
+                tp+=1
+            elif(yTest[i]==0):
+                fp+=1
+        elif(yPredicted<0.5):
+            if(yTest[i]==1):
+                fn+=1
+            elif(yTest[i]==0):
+                tn+=1
+    print(count)
+    precision=tp/(tp+fp)
+    recall=tp/(tp+fn)
+    fValue=(2*(recall*precision))/(recall+precision)
+    acc=(tp+tn)/(tp+fp+tn+fn)
+    print(str(tp)+", "+str(fp)+", "+str(fn)+", "+str(tn))
+    print("acc: "+ str(acc))
+    print("precision: " + str(precision))
+    print("recall: " + str(recall))
+    print("F-value: "+ str(fValue))
+    cm=confusion_matrix(ysPredicted, yTest)
+    sns.heatmap(cm, annot=True, fmt="1.0f",  cmap='Blues')
+    plt.xlabel("label")
+    plt.ylabel("prediction")
+    plt.tight_layout()
+    plt.savefig('matricsConfusion.png')
+
+
+def main():
+    getParametersHyperBest0()
+    #parameters= {'n_estimators': 45, 'max_depth': 35, 'min_samples_leaf': 4, 'min_samples_split': 6, "random_state":42}
+    #test0(parameters)
 
 if __name__ == '__main__':
     main()

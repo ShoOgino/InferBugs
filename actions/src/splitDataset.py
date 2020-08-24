@@ -26,10 +26,10 @@ def standardize(datasTrain,datasTest):
             data[indexRow]=(float(data[indexRow])-mean)/std
 
 pathsTrain= [
-    "../../datasets/cassandra/1.csv",
-    "../../datasets/cassandra/2.csv"
+    "../../datasets/cassandra/hasBeenBuggy/1.csv",
+    "../../datasets/cassandra/hasBeenBuggy/2.csv"
     ]
-pathTest="../../datasets/cassandra/3.csv"
+pathTest="../../datasets/cassandra/hasBeenBuggy/3.csv"
 datasTrain=[]
 datasValid=[]
 datasTest=[]
@@ -40,6 +40,18 @@ for pathTrain in pathsTrain:
 with open(pathTest, encoding="utf_8") as f:
     reader = csv.reader(f)
     datasTest.extend([row for row in reader])
+datasTest=random.sample(datasTest, len(datasTest))
+# kazu
+#datasTestBuggy=[]
+#datasTestNotBuggy=[]
+#for data in datasTest:
+#    if(int(data[1])==1):
+#        datasTestBuggy.append(data)
+#    else:
+#        datasTestNotBuggy.append(data)
+#datasTest=[]
+#datasTest.extend(datasTestBuggy)
+#datasTest.extend(random.sample(datasTestNotBuggy, len(datasTestBuggy)))
 standardize(datasTrain, datasTest)
 with open('../../datasets/cassandra/test.csv' , 'w', newline="") as streamFileTest:
     writer = csv.writer(streamFileTest)
@@ -53,7 +65,7 @@ for data in datasTrain:
         datasBuggy.append(data)
     elif(int(data[1])==0):
         datasNotBuggy.append(data)
-datasNotBuggy=random.sample(datasNotBuggy, len(datasBuggy))
+#datasNotBuggy=random.sample(datasNotBuggy, len(datasBuggy))
 random.seed(0)
 
 random.shuffle(datasBuggy)
