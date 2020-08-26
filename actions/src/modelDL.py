@@ -24,7 +24,6 @@ dirModel="../../models"
 dirDataset="../../datasets"
 dirResults="../../results"
 
-# load the dataset, returns train and test x and y elements
 def load_dataset(purpose="", nameProject='', indexCV=0):
     if purpose=="build":
         dataTrain=[[],[],[]]
@@ -75,60 +74,56 @@ def load_dataset(purpose="", nameProject='', indexCV=0):
         print(dataTest[1].shape)
         return dataTest[1]
 
-#class TestCallback(keras.callbacks.Callback):
-#    def __init__(self, xValid, yValid,batchSize,resultsValid,indexCV):
-#        self.lossBest=1000000
-#        self.xValid = xValid
-#        self.yValid = yValid
-#        self.resultsValid=resultsValid
-#        self.batchSize=batchSize
-#        self.indexCV=indexCV
-#    def on_epoch_end(self, epoch, logs={}):
-#        xs, ys = self.xValid, self.yValid
-#        loss, mae = self.model.evaluate(xs, ys,batch_size=self.batchSize,verbose=0)
-#        ysPredicted=self.model.predict(xs)
-#        count=0
-#        for i in range(len(ys)):
-#            if abs(ys[i]-ysPredicted[i])<0.5:
-#                count=count+1
-#        acc=count/len(xs)
-#
-#        self.resultsValid["loss"].append(loss)
-#        self.resultsValid["mae"].append(mae)
-#        self.resultsValid["acc"].append(acc)
-#        print('Validation loss: {}, mae: {}, acc: {}'.format(loss, mae, acc))
-#        if loss<self.lossBest:
-#            print("lossBest!: {}".format(loss))
-#            self.model.save(os.path.join(dirModel,nameProject,str(loss)+'.h5'), #include_optimizer=False)
-#            self.lossBest=loss
+class TestCallback(keras.callbacks.Callback):
+    def __init__(self, xValid, yValid,batchSize,resultsValid,indexCV):
+        self.lossBest=1000000
+        self.xValid = xValid
+        self.yValid = yValid
+        self.resultsValid=resultsValid
+        self.batchSize=batchSize
+        self.indexCV=indexCV
+    def on_epoch_end(self, epoch, logs={}):
+        xs, ys = self.xValid, self.yValid
+        loss, mae = self.model.evaluate(xs, ys,batch_size=self.batchSize,verbose=0)
+        ysPredicted=self.model.predict(xs)
+        count=0
+        for i in range(len(ys)):
+            if abs(ys[i]-ysPredicted[i])<0.5:
+                count=count+1
+        acc=count/len(xs)
 
+        self.resultsValid["loss"].append(loss)
+        self.resultsValid["mae"].append(mae)
+        self.resultsValid["acc"].append(acc)
+        print('Validation loss: {}, mae: {}, acc: {}'.format(loss, mae, acc))
+        if loss<self.lossBest:
+            print("lossBest!: {}".format(loss))
+            self.model.save(os.path.join(dirModel,nameProject,str(loss)+'.h5'), include_optimizer=False)
+            self.lossBest=loss
 
-# fit and evaluate a model
 def build(xTrain, yTrain, xValid, yValid, indexCV=0):
     resultsValid={"loss":[],"mae":[], "acc":[],"detail":[[]]}
     verbose, epochs, batch_size = 2, 1000, 128
     n_features, n_outputs = xTrain.shape[1], 1
 
     model = Sequential()
-    model.add(Dense(128, activation="relu"))
-    model.add(Dropout(0.2))
-    model.add(Dense(128, activation="relu"))
-    model.add(Dropout(0.2))
-    model.add(Dense(128, activation="relu"))
-    model.add(Dropout(0.2))
+    model.add(Dense(16, activation="relu"))
+    #model.add(Dense(128, activation="relu"))
+    #model.add(Dropout(0.2))
+    #model.add(Dense(128, activation="relu"))
+    #model.add(Dropout(0.2))
     model.add(Dense(n_outputs,activation='sigmoid'))
 
-    adam=keras.optimizers.Adam(lr=0.01, beta_1=0.9, beta_2=0.999, epsilon=1e-07, decay=0.0)
+    adam=keras.optimizers.Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-07, decay=0.0)
     model.build((None,n_features))
     model.compile(loss='binary_crossentropy', optimizer=adam, metrics=['acc'])
     model.summary()
 
-    earlyStopping=keras.callbacks.EarlyStopping(monitor='val_loss', min_delta=0, patience=50, verbose=0, mode='auto')
-    history=model.fit(xTrain, yTrain, epochs=epochs, batch_size=batch_size, verbose=verbose, validation_data=(xValid, yValid))#callbacks=[earlyStopping])#,callbacks=[TestCallback(xValid, yValid, batch_size, resultsValid, indexCV)])
+    #earlyStopping=keras.callbacks.EarlyStopping(monitor='val_loss', min_delta=0, patience=50, verbose=0, mode='auto')
+    history=model.fit(xTrain, yTrain, epochs=epochs, batch_size=batch_size, verbose=verbose, validation_data=(xValid, yValid), callbacks=[TestCallback(xValid, yValid, batch_size, resultsValid, indexCV)])
     model.save(os.path.join(dirModel,nameProject,'latest.h5'), include_optimizer=False)
 
     compare_TV(history)
-
     return model
 
 def compare_TV(history):
@@ -145,11 +140,11 @@ def compare_TV(history):
     fig = plt.figure()
     plt.ylim(0, 2)
     plt.plot(epochs, loss, 'b' ,label = 'lossTrain')
-    plt.plot(epochs, acc, 'bo' ,label = 'accTrain')
+    plt.plot(epochs, acc, 'r' ,label = 'accTrain')
     plt.title('Training and Validation acc')
     plt.legend()
 
-    plt.plot(epochs, val_loss, 'r' , label= 'lossVal')
+    plt.plot(epochs, val_loss, 'bo' , label= 'lossVal')
     plt.plot(epochs, val_acc, 'ro' , label= 'accVal')
     plt.title('Training and Validation loss')
     plt.legend()
@@ -163,6 +158,8 @@ def predict(nameProject, nameModel, xTest):
 
 
 def test(nameProject, nameModel, xTest, yTest):
+    print("nameProject: " + nameProject)
+    print("nameModel: " + nameModel)
     model = keras.models.load_model(os.path.join(dirModel,nameProject,nameModel))
     count=0
     ysPredicted=model.predict(xTest)
@@ -186,7 +183,7 @@ def test(nameProject, nameModel, xTest, yTest):
     fValue=(2*(recall*precision))/(recall+precision)
     acc=(tp+tn)/(tp+fp+tn+fn)
     print(str(tp)+", "+str(fp)+", "+str(fn)+", "+str(tn))
-    print("acc: "+ str((tp+tn)/(tp+fp+tn+fn)))
+    print("acc: "+ str(acc))
     print("precision: " + str(precision))
     print("recall: " + str(recall))
     print("F-value: "+ str(fValue))
@@ -211,6 +208,6 @@ if __name__ == '__main__':
     purpose="build"
     #purpose="test"
     nameModel="latest.h5"
-    #nameModel="0.1734926402568817.h5"
+    #nameModel="0.6333100986480713.h5"
     nameProject="cassandra"
     run(purpose, nameProject, nameModel, 0)

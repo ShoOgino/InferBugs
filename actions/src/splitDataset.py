@@ -26,10 +26,8 @@ def standardize(datasTrain,datasTest):
             data[indexRow]=(float(data[indexRow])-mean)/std
 
 pathsTrain= [
-    "../../datasets/cassandra/hasBeenBuggy/1.csv",
-    "../../datasets/cassandra/hasBeenBuggy/2.csv"
-    ]
-pathTest="../../datasets/cassandra/hasBeenBuggy/3.csv"
+    "../../datasets/cassandra/1.csv"]
+pathTest="../../datasets/cassandra/2.csv"
 datasTrain=[]
 datasValid=[]
 datasTest=[]
@@ -65,7 +63,7 @@ for data in datasTrain:
         datasBuggy.append(data)
     elif(int(data[1])==0):
         datasNotBuggy.append(data)
-#datasNotBuggy=random.sample(datasNotBuggy, len(datasBuggy))
+datasNotBuggy=random.sample(datasNotBuggy, len(datasBuggy))
 random.seed(0)
 
 random.shuffle(datasBuggy)
