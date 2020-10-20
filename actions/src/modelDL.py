@@ -214,7 +214,7 @@ def saveGraphTrial(history, trial):
         + project + "_" \
         + variableDependent + "_" \
         + release4test + "_" \
-        + model + "_" \
+        + modelAlgorithm + "_" \
         + dateStart + "_" \
         + str(trial.number) \
         + '.png'
@@ -291,15 +291,14 @@ def objective(trial):
         + project + "_" \
         + variableDependent + "_" \
         + release4test + "_" \
-        + model + "_" \
+        + modelAlgorithm + "_" \
         + dateStart + "_" \
-        + str(trial.number) \
         + '.txt'
     with open(pathLogOverall, mode='a') as f:
         f.write('\n')
-        f.write(score)
+        f.write(str(score))
         f.write(",")
-        f.write(trial.params)
+        f.write(str(trial.params))
 
     return score
 
@@ -386,6 +385,7 @@ def main():
     variableDependent = args.variableDependent
     global purpose 
     purpose = args.purpose
+    global modelAlgorithm
     modelAlgorithm = args.modelAlgorithm
     parameterHyper = args.parameterHyper
     global model
@@ -406,7 +406,7 @@ def main():
             + project + "_" \
             + variableDependent +  "_" \
             + release4test + "_" \
-            + model + "_" \
+            + modelAlgorithm + "_" \
             + dateStart + "_" \
             + str(trial.number) \
             + '.png'
