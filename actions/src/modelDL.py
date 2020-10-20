@@ -320,8 +320,9 @@ def test(hp):
     if hp["optimizer"] == "sgd":
         lrSgd = hp["lrSgd"]
         momentumSgd = hp["momentumSgd"]
-        decaySgd = hp["decaySgd"]
-        opt = keras.optimizers.SGD(lr=lrSgd, momentum=momentumSgd, decay=decaySgd)
+        #decaySgd = hp["decaySgd"]
+        #opt = keras.optimizers.SGD(lr=lrSgd, momentum=momentumSgd, decay=decaySgd)
+        opt = keras.optimizers.SGD(lr=lrSgd, momentum=momentumSgd)
     elif hp["optimizer"] == "adagrad":
         lrAdagrad = hp["lrAdagrad"]
         epsilonAdagrad = hp["epsilonAdagrad"]
