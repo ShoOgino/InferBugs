@@ -192,7 +192,7 @@ def analyzeResult(ysPredicted, yLabel):
     plt.savefig('matricsConfusion.png')
 
 
-def saveGraphTrial(history):
+def saveGraphTrial(history, trial):
     # Setting Parameters
     acc = history.history['acc']
     val_acc = history.history['val_acc']
@@ -272,7 +272,7 @@ def objective(trial):
     model.compile(loss='binary_crossentropy', optimizer=opt, metrics=['acc'])
 
     history=model.fit(xTrain, yTrain, epochs=epochs, batch_size=sizeBatch, verbose=verbose, validation_data=(xValid, yValid),     callbacks=[EarlyStopping(monitor='val_loss', patience=100, verbose=0, mode='auto')])#callbacks=[TestCallback(xValid, yValid,     batch_size, resultsValid, 0)])
-    saveGraphTrial(history)
+    saveGraphTrial(history, trial)
 
 
     # 最小値のエポック数+6までの値の平均を取る。
