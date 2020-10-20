@@ -19,6 +19,7 @@ import sys
 import tensorflow as tf
 import json
 import argparse
+import datetime
 
 dirModel="../../models"
 dirDataset="../../datasets"
@@ -391,6 +392,7 @@ def main():
     model = args.model
 
     global dateStart
+    dt_now = datetime.datetime.now()
     dateStart=dt_now.strftime('%Y%m%d%H%M%S')
 
     if purpose=="test":
