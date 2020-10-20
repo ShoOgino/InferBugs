@@ -15,16 +15,15 @@ import os
 import csv
 import numpy as np
 import copy
-dirModel="../../models"
-dirDataset="../../datasets"
-dirResults="../../results"
+
 import seaborn as sns
 from sklearn.metrics import confusion_matrix
 import optuna
 from statistics import mean
 from sklearn.metrics import mean_squared_error
-from imblearn.over_sampling import SMOTE
-from imblearn.over_sampling import RandomOverSampler
+import sys
+import datetime
+import json
 
 losssTrain=[]
 losssValid=[]
@@ -33,12 +32,17 @@ xTrains=[]
 yTrains=[]
 xValids=[]
 yValids=[]
+dirModel="../../models"
+dirDataset="../../datasets"
+dirResults="../../results"
+nameProject = ""
+releaseIdTrain = ""
 
-def loadDataset(purpose="", nameProject='', indexCV=0):
+def loadDataset(purpose="", indexCV=0):
     if purpose=="build":
         dataTrain=[[],[],[]]
         dataValid=[[],[],[]]
-        with open(os.path.join(dirDataset,nameProject,"train"+str(indexCV)+".csv")) as f:
+        with open(os.path.join(dirDataset,nameProject,releaseIdTrain,"train"+str(indexCV)+".csv")) as f:
             train = csv.reader(f)
             for i,row in enumerate(train):
                 #print(item["id"])
@@ -49,7 +53,7 @@ def loadDataset(purpose="", nameProject='', indexCV=0):
             dataTrain[2]=np.array(dataTrain[2])
             print(dataTrain[1].shape)
             print(dataTrain[2].shape)
-        with open(os.path.join(dirDataset,nameProject,"valid"+str(indexCV)+".csv")) as f:
+        with open(os.path.join(dirDataset,nameProject,releaseIdTrain, "valid"+str(indexCV)+".csv")) as f:
             valid = csv.reader(f)
             for i,row in enumerate(valid):
                 dataValid[0].append(row[0])
@@ -62,7 +66,7 @@ def loadDataset(purpose="", nameProject='', indexCV=0):
         return dataTrain[1], dataTrain[2], dataValid[1], dataValid[2]
     elif purpose=="test":
         dataTest=[[],[],[]]
-        with open(os.path.join(dirDataset,nameProject,"test.csv")) as f:
+        with open(os.path.join(dirDataset,nameProject,releaseIdTrain,"test.csv")) as f:
             test = csv.reader(f)
             for i,row in enumerate(test):
                 dataTest[0].append(row[0])
@@ -75,7 +79,7 @@ def loadDataset(purpose="", nameProject='', indexCV=0):
         return dataTest[1],dataTest[2]
     elif purpose=="predict":
         dataTest=[[],[]]
-        with open(os.path.join(dirDataset,nameProject,"test.csv")) as f:
+        with open(os.path.join(dirDataset,nameProject,releaseIdTrain, "test.csv")) as f:
             test = csv.reader(f)
             for i,row in enumerate(test):
                 dataTest[0].append(row[0])
@@ -106,7 +110,7 @@ def objective(trial):
         accs.append(acc)
     losssTrain.append(mean(lt))
     losssValid.append(mean(lv))
-    return 1-mean(accs)
+    return np.amin(lossValid)#1-mean(accs)
 
 def visualizeResult():
     fig = plt.figure()
@@ -116,18 +120,6 @@ def visualizeResult():
     plt.title('val loss')
     plt.legend()
     fig.savefig("result.png")
-
-def getParametersHyperBest():
-    for indexCV in range(5):
-        xTrain, yTrain, xValid, yValid = loadDataset("build", "cassandra", indexCV)
-        xTrains.append(xTrain)
-        yTrains.append(yTrain)
-        xValids.append(xValid)
-        yValids.append(yValid)
-    study = optuna.create_study()
-    study.optimize(objective, timeout=60*60*6)
-    print('params:', study.best_params)
-    visualizeResult()
 
 def analyzeResult(ysPredicted, yLabel):
     tp=0
@@ -164,7 +156,7 @@ def analyzeResult(ysPredicted, yLabel):
     plt.savefig('matricsConfusion.png')
 
 def test(parameters):
-    xTrain, yTrain, xValid, yValid=loadDataset("build", "cassandra", 2)
+    xTrain, yTrain, xValid, yValid=loadDataset("build")
     x=np.concatenate([xTrain, xValid])
     y=np.concatenate([yTrain, yValid])
     for i in range(100):
@@ -176,14 +168,38 @@ def test(parameters):
             min_samples_split=parameters["min_samples_split"],
             random_state=i)
         model.fit(x,y)
-        xTest, yTest=loadDataset("test", "cassandra")
+        xTest, yTest=loadDataset("test")
         ysPredicted=model.predict(xTest)
         analyzeResult(ysPredicted, yTest)
 
-def main():
-    #getParametersHyperBest()
-    parameters= {'n_estimators': 232, 'max_depth': 69, 'max_leaf_nodes': 209, 'min_samples_leaf': 9, 'min_samples_split': 63, "random_state":0}
-    test(parameters)
-
 if __name__ == '__main__':
-    main()
+    dt_now = datetime.datetime.now()
+
+    args = sys.argv
+    nameProject = args[1]
+    releaseIdTrain = args[2]
+    purpose = args[3]
+
+    print(nameProject)
+    print(releaseIdTrain)
+    print(purpose)
+    if purpose=="test":
+        json_open = open(os.path.join(dirDataset, nameProject, releaseIdTrain, 'hpRF.json'), 'r')
+        hp = json.load(json_open)
+        test(hp)
+    elif purpose=="search":
+        for indexCV in range(5):
+            xTrain, yTrain, xValid, yValid = loadDataset("build", indexCV)
+            xTrains.append(xTrain)
+            yTrains.append(yTrain)
+            xValids.append(xValid)
+            yValids.append(yValid)
+        study = optuna.create_study()
+        study.optimize(objective, timeout=60*60*6)
+        print('params:', study.best_params)
+        visualizeResult()
+        path_w1 = nameProject + "_" + releaseIdTrain + "_" + dt_now.strftime('%Y%m%d%H%M%S') + '.txt'
+        with open(path_w1, mode='w') as f:
+            f.write(str(len(study.trials)))
+            for key, value in trial.params.items():
+                f.write('     {} : {}'.format(key, value))
