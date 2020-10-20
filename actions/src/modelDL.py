@@ -292,8 +292,8 @@ def objective(trial):
         + variableDependent + "_" \
         + release4test + "_" \
         + model + "_" \
-        + dt_now.strftime('%Y%m%d%H%M%S') + "_" \
-        + trial.number \
+        + dateStart + "_" \
+        + str(trial.number) \
         + '.txt'
     with open(pathLogOverall, mode='a') as f:
         f.write('\n')
@@ -407,8 +407,8 @@ def main():
             + variableDependent +  "_" \
             + release4test + "_" \
             + model + "_" \
-            + dt_now.strftime('%Y%m%d%H%M%S') + "_" \
-            + trial.number \
+            + dateStart + "_" \
+            + str(trial.number) \
             + '.png'
 
 
