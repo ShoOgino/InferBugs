@@ -192,7 +192,7 @@ def analyzeResult(ysPredicted, yLabel):
     plt.savefig('matricsConfusion.png')
 
 
-def saveGraphTrial(history, trial):
+def saveGraphTrial(history, number):
     # Setting Parameters
     acc = history.history['acc']
     val_acc = history.history['val_acc']
@@ -216,7 +216,7 @@ def saveGraphTrial(history, trial):
         + release4test + "_" \
         + modelAlgorithm + "_" \
         + dateStart + "_" \
-        + str(trial.number) \
+        + str(number) \
         + '.png'
     fig.savefig(pathLogGraph)
     plt.clf()
@@ -272,7 +272,7 @@ def objective(trial):
     model.compile(loss='binary_crossentropy', optimizer=opt, metrics=['acc'])
 
     history=model.fit(xTrain, yTrain, epochs=epochs, batch_size=sizeBatch, verbose=verbose, validation_data=(xValid, yValid),     callbacks=[EarlyStopping(monitor='val_loss', patience=100, verbose=0, mode='auto')])#callbacks=[TestCallback(xValid, yValid,     batch_size, resultsValid, 0)])
-    saveGraphTrial(history, trial)
+    saveGraphTrial(history, trial.number)
 
 
     # 最小値のエポック数+6までの値の平均を取る。
@@ -313,7 +313,7 @@ def test(hp):
     resultsValid={"loss":[],"mae":[], "acc":[],"detail":[[]]}
     xTrain, yTrain, xTest, yTest = loadDataset("test", project)
 
-    verbose, epochs, sizeBatch = 1, 10, hp["sizeBatch"]
+    verbose, epochs, sizeBatch = 1, 1000, hp["sizeBatch"]
     n_features, n_outputs = xTrain.shape[1], 1
 
     model.build((None,n_features))
@@ -357,7 +357,7 @@ def test(hp):
     model.compile(loss='binary_crossentropy', optimizer=opt, metrics=['acc'])
 
     history=model.fit(xTrain, yTrain, epochs=epochs, batch_size=sizeBatch, verbose=verbose, validation_data=(xTest, yTest), callbacks=[EarlyStopping(monitor='val_loss', patience=100, verbose=0, mode='auto'), TestCallback(xTest, yTest, sizeBatch, resultsValid, 0)])
-    compareTV(history)
+    saveGraphTrial(history, 0)
 
 def main():
     physical_devices = tf.config.experimental.list_physical_devices('GPU')
