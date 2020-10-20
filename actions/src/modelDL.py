@@ -214,7 +214,7 @@ def saveGraphTrial(history):
         + variableDependent + "_" \
         + release4test + "_" \
         + model + "_" \
-        + dt_now.strftime('%Y%m%d%H%M%S') + "_" \
+        + dateStart + "_" \
         + trial.number \
         + '.png'
     fig.savefig(pathLogGraph)
@@ -387,7 +387,11 @@ def main():
     purpose = args.purpose
     modelAlgorithm = args.modelAlgorithm
     parameterHyper = args.parameterHyper
+    global model
     model = args.model
+
+    global dateStart
+    dateStart=dt_now.strftime('%Y%m%d%H%M%S')
 
     if purpose=="test":
         json_open = open(os.path.join(dirDataset, project, release4test, 'hpDL.json'), 'r')
