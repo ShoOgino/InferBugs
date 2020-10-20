@@ -396,7 +396,7 @@ def main():
     dateStart=dt_now.strftime('%Y%m%d%H%M%S')
 
     if purpose=="test":
-        json_open = open(os.path.join(dirDataset, project, release4test, 'hpDL.json'), 'r')
+        json_open = open(os.path.join(dirDataset, project, variableDependent, release4test, 'hpDL.json'), 'r')
         hp = json.load(json_open)
         test(hp)
     elif purpose=="search":
