@@ -216,7 +216,7 @@ def saveGraphTrial(history, trial):
         + release4test + "_" \
         + model + "_" \
         + dateStart + "_" \
-        + trial.number \
+        + str(trial.number) \
         + '.png'
     fig.savefig(pathLogGraph)
     plt.clf()
