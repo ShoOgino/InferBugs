@@ -216,6 +216,8 @@ class Modeler:
             model.add(Dropout(hp["rateDropout"+str(i)]))
             model.add(Dense(n_outputs,activation='sigmoid'))
 
+        resultsValid={"loss":[],"mae":[], "acc":[],"detail":[[]]}
+
         verbose, epochs, sizeBatch = 1, 1000, hp["sizeBatch"]
         n_features, n_outputs = xTrain.shape[1], 1
 
