@@ -11,6 +11,7 @@ option={
     "pathModel"         : "",
     "pathHP"            : "",
 }
+
 option["idExperiment"] = \
         option["project"] + "_" \
         + option["variableDependent"] + "_" \

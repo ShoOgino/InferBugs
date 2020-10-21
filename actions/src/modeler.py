@@ -109,7 +109,7 @@ class Modeler:
                         epsilonNadam = trial.suggest_loguniform('epsilonNadam', 1e-10, 1e-5)
                         opt = keras.optimizers.Nadam(lr=lrNadam, beta_1=beta_1Nadam, beta_2=beta_2Nadam, epsilon=epsilonNadam)
                     return opt
-                verbose, epochs, sizeBatch = 0, 10, trial.suggest_int("sizeBatch", 32, 256)
+                verbose, epochs, sizeBatch = 0, 1000, trial.suggest_int("sizeBatch", 32, 256)
                 n_features, n_outputs = xTrain.shape[1], 1
                 model = chooseModel(trial)
                 opt = chooseOptimizer(trial)
