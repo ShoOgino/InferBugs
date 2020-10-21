@@ -182,7 +182,7 @@ def set_objective(xTrain, yTrain, xValid, yValid, modelAlgorithm, identifier):
         model.build((None,n_features))
         model.compile(loss='binary_crossentropy', optimizer=opt, metrics=['acc'])
         history=model.fit(xTrain, yTrain, epochs=epochs, batch_size=sizeBatch, verbose=verbose, validation_data=(xValid, yValid),         callbacks=[EarlyStopping(monitor='val_loss', patience=100, verbose=0, mode='auto')])
-        saveGraphTrial(history, identifier, trial.number)
+        saveGraphTrain(history, identifier, trial.number)
         # 最小値のエポック数+6までの値の平均を取る。
         lossesVal = history.history['val_loss']
         lossValMin = min(lossesVal)
