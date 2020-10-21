@@ -1,4 +1,0 @@
-0,"src/java/org/apache/cassandra/db/RowIteratorFactory#memtableEntryIterator(Memtable,DecoratedKey).mjava"
-2,"interface/thrift/gen-java/org/apache/cassandra/thrift/KsDef#isSetReplication_factor().mjava"
-344,"src/java/org/apache/cassandra/db/SuperColumn#value().mjava"
-344,"src/java/org/apache/cassandra/cli/CliMain#connect(String,int).mjava"

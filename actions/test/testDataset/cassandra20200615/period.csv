@@ -1,4 +1,0 @@
-loc,addLoc,delLoc,chgNum,fixChgNum,pastBugNum,hcm,devTotal,devMinor,devMajor,ownership,period,avgInterval,maxInterval,minInterval,LogCoupNum,BugIntroNum,isBuggy,path
-,,,1,0,0,,1,0,1,1,0,,,,1,0,y,"src/java/org/apache/cassandra/db/RowIteratorFactory#memtableEntryIterator(Memtable,DecoratedKey).mjava"
-,,,1,0,0,,1,0,1,1,2,,,,1,1,n,interface/thrift/gen-java/org/apache/cassandra/thrift/KsDef#isSetReplication_factor().mjava
-,,,1,0,0,,1,0,1,1,403,,,,1,0,n,src/java/org/apache/cassandra/db/SuperColumn#value().mjava

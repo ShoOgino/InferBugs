@@ -1,4 +1,0 @@
-loc,addLoc,delLoc,chgNum,fixChgNum,pastBugNum,hcm,devTotal,devMinor,devMajor,ownership,period,avgInterval,maxInterval,minInterval,LogCoupNum,BugIntroNum,isBuggy,path
-9,0,0,1,0,0,0.0,1,0,1,1.0,0,0,0,0,1,0,y,"src/java/org/apache/cassandra/db/RowIteratorFactory#memtableEntryIterator(Memtable,DecoratedKey).mjava"
-3,0,0,1,0,0,1.3699999999999998e-05,1,0,1,1.0,2,2,2,2,1,0,n,src/java/org/apache/cassandra/config/CFMetaData#hashCode().mjava
-42,28,16,21,2,1,0.0029201,2,0,2,0.6190476189999999,344,16,65,0,21,5,y,src/java/org/apache/cassandra/cli/CliClient#executeGet(CommonTree).mjava

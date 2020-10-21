@@ -1,4 +1,0 @@
-loc,addLoc,delLoc,chgNum,fixChgNum,pastBugNum,hcm,devTotal,devMinor,devMajor,ownership,period,avgInterval,maxInterval,minInterval,LogCoupNum,BugIntroNum,isBuggy,path
-6,3,9,6,0,0,0.001104876,1,0,1,1.0,344,57,153,0,6,2,y,src/java/org/apache/cassandra/net/MessageDeliveryTask#run().mjava
-6,4,3,4,0,0,0.000429813,2,0,2,0.75,80,20,36,1,3,3,n,src/java/org/apache/cassandra/config/DatabaseDescriptor#getNonSystemTables().mjava
-3,0,0,1,0,0,0.000278237,1,0,1,1.0,344,344,344,344,1,0,n,src/java/org/apache/cassandra/db/SuperColumn#value().mjava

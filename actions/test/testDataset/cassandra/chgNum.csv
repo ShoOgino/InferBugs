@@ -1,4 +1,0 @@
-1,"interface/thrift/gen-java/org/apache/cassandra/thrift/Cassandra.describe_ring_args#setKeyspaceIsSet(boolean).mjava"
-2,"interface/thrift/gen-java/org/apache/cassandra/thrift/Cassandra.multiget_args#compareTo(multiget_args).mjava"
-28,"src/java/org/apache/cassandra/db/ColumnFamilyStore#getColumnFamily(QueryFilter,int).mjava"
-6,"src/java/org/apache/cassandra/client/RingCache#getEndPoint(String).mjava"

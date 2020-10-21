@@ -1,3 +1,0 @@
-0.25,"src/java/org/apache/cassandra/tools/ClusterCmd#main(String[]).mjava"
-0.333333333,"src/java/org/apache/cassandra/service/AntiEntropyService.Validator#call().mjava"
-1,"interface/thrift/gen-java/org/apache/cassandra/thrift/Cassandra.describe_ring_args#setKeyspaceIsSet(boolean).mjava"

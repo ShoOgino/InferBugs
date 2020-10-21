@@ -1,5 +1,0 @@
-1,"src/java/org/apache/cassandra/db/IColumnContainer#addColumn(IColumn).mjava"
-2,"interface/thrift/gen-java/org/apache/cassandra/thrift/NotFoundException#validate().mjava"
-145,"src/java/org/apache/cassandra/tools/NodeCmd#main(String[]).mjava"
-20,"src/java/org/apache/cassandra/gms/Gossiper.GossipDigestSynVerbHandler#doSort(List[GossipDigest]).mjava"
-47,"contrib/circuit/src/org/apache/cassandra/contrib/circuit/RingPanel#paintComponent(Graphics).mjava"

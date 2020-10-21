@@ -75,21 +75,3 @@ class UtilPath:
     @staticmethod
     def Result(nameExperiment, mode):
         return os.path.join(UtilPath.ResultAction(nameExperiment),"["+str(datetime.datetime.now().strftime("%Y%m%d%H%M%S"))+"]"+mode+"_result.csv")
-
-class Option:
-    def __init__(self, option):
-        self.name=option["name"]
-        self.mode=option["mode"]
-        self.repositories=option["repositories"]
-        self.parameters=option["parameters"]
-
-    def getRepositorieImproved(self):
-        for repository in self.repositories:
-            repository["path"]=UtilPath.Repository(self.name,repository["name"])
-            repository["pathAnnotations"]=UtilPath.AboutRepository(self.name, repository["name"])+"/annotations.json"
-        return self.repositories
-    def getCodeIssueJira(self, target):
-        return target["codeIssueJira"]
-    def getNameProjectJira(self, target):
-        return target["nameProjectJira"]
-

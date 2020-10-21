@@ -1,4 +1,0 @@
-1,"interface/thrift/gen-java/org/apache/cassandra/thrift/Cassandra.describe_ring_args#setKeyspaceIsSet(boolean).mjava"
-2,"src/java/org/apache/cassandra/db/ColumnFamily#cloneMeShallow().mjava"
-4,"src/java/org/apache/cassandra/service/AntiEntropyService.Validator#call().mjava"
-4,"src/java/org/apache/cassandra/client/RingCache#getEndPoint(String).mjava"

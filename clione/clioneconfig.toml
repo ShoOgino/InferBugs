@@ -1,3 +1,0 @@
-src = "actions/src"
-lang = "python"
-granularity="method"

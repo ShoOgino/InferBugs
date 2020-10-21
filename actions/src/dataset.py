@@ -1,306 +1,76 @@
-import glob
+from src.utility import UtilPath
+import numpy as np
 import os
-import sys
-from pydriller import GitRepository, RepositoryMining, domain
 import csv
-import json
-import math
-import statistics
-from tqdm import tqdm
-
-import datetime
-import re
 
 class Dataset:
-    def __init__(self, repositories):
-        self.dataset=[]
-        self.repositories=repositories
-    def prepare(self):
-        for repository in self.repositories:
-            datasetRepository=[]
-            if(not os.path.exists(repository["path"])):
-                pass
-                #rawdata=Rawdata()
-            gr = GitRepository(repository["path"])
-            pathsFile = [pathFile for pathFile in glob.glob(repository["path"]+"/**/*.mjava", recursive=True) if re.match(repository["filterFile"], pathFile)]
-            commitsBug=self.getCommitsBug(repository)
+    def __init__(self, project, variableDependent, release4Test, purpose):
+        self.project = project
+        self.variableDependent = variableDependent
+        self.release4Test = release4Test
+        self.porpose = purpose
 
-            with tqdm(pathsFile,bar_format="{desc}: {percentage:3.0f}%|{bar:10}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}{postfix}]") as pbar:
-                for pathFile in pbar:
-                    nameFile=os.path.basename(pathFile)
-                    pbar.postfix=nameFile
-                    pbar.desc=repository["name"]
-                    datasetRepository.append(Data(gr, pathFile, commitsBug).getData())
-            self.dataset.extend(datasetRepository)
-    def getCommitsBug(self, repository):
-        commitsBug={}
-        annotations=json.load(open(repository["pathAnnotations"], 'r'))
-        for commit in annotations:
-            for i in range(len(annotations[commit])):
-                if(not commit in commitsBug):
-                    commitsBug[commit]={"fix":[], "prefix":[], "intro":[]} # prefix を追加
-                commitsBug[commit]["fix"].append(annotations[commit][i]["filePath"])
-                for revision in annotations[commit][i]["revisions"]:
-                    if(revision!=commit):
-                        if(not revision in commitsBug):
-                             commitsBug[revision]={"fix":[], "prefix":[], "intro":[]}
-                        commitsBug[revision]["intro"].append(annotations[commit][i]["filePath"])
-        return commitsBug
-    def save(self, path):
-        with open(path, 'a', newline="") as f:
-            writer = csv.writer(f)
-            writer.writerows(self.dataset)
-    def load(self):
-        pass
-    def visualize(self):
-        pass
-class Data:
-    def __init__(self, gr, pathFile, commitsBug):
-        self.gr=gr
-        self.pathFile=pathFile
-        self.nameFile=os.path.basename(pathFile)
-        self.commits=[]
-        commits=self.gr.get_commits_modified_file(self.pathFile)
-        print("-----------------------------------------------")
-        print(pathFile)
-        #print("all commits")
-        #print(commits)
-        pathTmp=pathFile
-        with open("log", mode='a') as f:
-            for commit in commits:
-                for modification in self.gr.get_commit(commit).modifications:
-                    if (pathTmp == modification.new_path):
-                        if (modification.change_type==modification.change_type.MODIFY) or (modification.change_type==modification.change_type.ADD):
-                            print(commit)
-                            print(modification.change_type)
-                            print(modification.old_path)
-                            self.commits.append(commit)
-                            #if modification.change_type==modification.change_type.ADD:
-                            #    break
-                        pathTmp=modification.old_path
-        #print("selected commits")
-        print("commits: "+str(len(self.commits)))
-        self.commitsBug=commitsBug
-    def getData(self):
-        return [
-            self.calculateLOC(),
-            self.calculateAddLOC(),
-            self.calculateDelLOC(),
-            self.calculateChgNum(),
-            self.calculateFixChgNum(),
-            self.calculatePastBugNum(),
-            self.calculateHCM(),
-            self.calculateDevTotal(),
-            self.calculateDevMinor(),
-            self.calculateDevMajor(),
-            self.calculateOwnership(),
-            self.calculatePeriod(),
-            self.calculateAvgInterval(),
-            self.calculateMaxInterval(),
-            self.calculateMinInterval(),
-            self.calculateLogCoupNum(),
-            self.calculateBugIntroNum(),
-            self.calculateIsBuggy(),
-            self.pathFile
-        ]
-    def calculateLOC(self):
-        LOC=0
-        with open(self.pathFile, "r") as fr:
-            lines=fr.read().splitlines()
-            for i, line in enumerate(lines):
-                #patternLineIgnore="^(\s*{\s*|\s*|\s*//.*|\s*case.*)$"
-                patternLineIgnore="^(\s*|\s*//.*)$"
-                if re.match(patternLineIgnore,line):
-                    continue
-                LOC=LOC+1
-        return LOC
-    def calculateLOCcopy(self):
-        LOC=0
-        with open(self.pathFile, "r") as fr:
-            lines=fr.read().splitlines()
-            for i, line in enumerate(lines):
-                #patternLineIgnore="^(\s*{\s*|\s*|\s*//.*|\s*case.*)$"
-                patternLineIgnore="^(\s*|\s*//.*)$"
-                if re.match(patternLineIgnore,line):
-                    continue
-                LOC=LOC+1
-        print("test")
-        return LOC
-    def calculateAddLOC(self):
-        addLOC=0
-        pathTmp=self.pathFile
-        for commit in self.commits:
-            for modification in self.gr.get_commit(commit).modifications:
-                if self.pathFile == modification.new_path:
-                    if modification.change_type==modification.change_type.MODIFY:
-                        addLOC+=modification.added
-                    pathTmp=modification.old_path
-        return addLOC
-    def calculateDelLOC(self):
-        delLOC=0
-        for commit in self.commits:
-            for modification in self.gr.get_commit(commit).modifications:
-                if (modification.filename==self.nameFile) and (modification.change_type==modification.change_type.MODIFY):
-                    delLOC+=modification.removed
-        print("test")
-        return delLOC
-    def calculateChgNum(self):
-        return len(self.commits)
-    def calculateFixChgNum(self):
-        pass
-    def calculatePastBugNum(self):
-        pastBugNum=0
-        for commit in self.commits:
-            if(commit in self.commitsBug):
-                if(self.nameFile in self.commitsBug[commit]["fix"]):
-                    pastBugNum=pastBugNum+1
-        return pastBugNum
-    def calculatePeriod(self):
-        dates=[self.gr.get_head().author_date]
-        for commit in self.commits:
-            dates.append(self.gr.get_commit(commit).author_date)
-        td=max(dates)-min(dates)
-        return td.days
-    def calculateBugIntroNum(self):
-        bugIntroNum=0
-        for commit in self.commits:
-            if(commit in self.commitsBug):
-                for name in self.commitsBug[commit]["intro"]:
-                    if ((name!=self.nameFile) and (".java" in name)):
-                        bugIntroNum=bugIntroNum+1
-                        break
-        return bugIntroNum
-    def calculateLogCoupNum(self):
-        logCoupNum=0
-        for commit in self.commits:
-            for modification in self.gr.get_commit(commit).modifications:
-                if((not ".java" in modification.filename) or (self.nameFile==modification.filename)):
-                    continue
-                commitsCoup = self.gr.get_commits_modified_file(modification.filename)
-                for commitCoup in commitsCoup:
-                    if(self.gr.get_commit(commitCoup).author_date < self.gr.get_commit(commit).author_date):
-                        if(commit in self.commitsBug):
-                            for name in self.commitsBug[commit]["intro"]:
-                                if (name==self.nameFile):
-                                    logCoupNum=logCoupNum+1
-                                    break
-                            else:
-                                continue
-                            break
-                else:
-                    continue
-                break
-        return logCoupNum
-    def calculateAvgInterval(self):
-        #dates=[]
-        #ddates=[]
-        #for commit in self.commits:
-        #    dates.append(self.gr.get_commit(commit).author_date)
-        #dates.sort()
-        #for i in range(len(dates)-1):
-        #    ddates.append((dates[i+1]-dates[i]).days)
-        #if len(ddates)==0:
-        #    ddates.append(self.calculatePeriod())
-        #intervalAvg=statistics.mean(ddates)
-        return self.calculatePeriod()//self.calculateChgNum()
-    def calculateMaxInterval(self):
-        dates=[]
-        ddates=[]
-        for commit in self.commits:
-            dates.append(self.gr.get_commit(commit).author_date)
-        dates.sort()
-        for i in range(len(dates)-1):
-            ddates.append((dates[i+1]-dates[i]).days)
-        if len(ddates)==0:
-            ddates.append(self.calculatePeriod())
-        intervalMax=max(ddates)
-        return intervalMax
-    def calculateMinInterval(self):
-        dates=[]
-        ddates=[]
-        for commit in self.commits:
-            dates.append(self.gr.get_commit(commit).author_date)
-        dates.sort()
-        for i in range(len(dates)-1):
-            ddates.append((dates[i+1]-dates[i]).days)
-        if len(ddates)==0:
-            ddates.append(self.calculatePeriod())
-        intervalMin=min(ddates)
-        return intervalMin
-    def calculateDevTotal(self):
-        developers=[]
-        for commit in self.commits:
-            developers.append(self.gr.get_commit(commit).author.name)
-            print("author   : "+self.gr.get_commit(commit).author.name)
-        return len(set(developers))
-    def calculateDevMinor(self):
-        devMinor=0
-        developers=[]
-        setDevelopers=[]
-        for commit in self.commits:
-            developers.append(self.gr.get_commit(commit).author.name)
-            print("author   : "+self.gr.get_commit(commit).author.name)
-        setDevelopers=set(developers)
-        for developer in setDevelopers:
-            if ((developers.count(developer)/len(developers))<0.2):
-                devMinor+=1
-        return devMinor
-    def calculateDevMajor(self):
-        devMajor=0
-        developers=[]
-        setDevelopers=[]
-        for commit in self.commits:
-            developers.append(self.gr.get_commit(commit).author.name)
-            print("author   : "+self.gr.get_commit(commit).author.name)
-        setDevelopers=set(developers)
-        for developer in setDevelopers:
-            if (0.2<=(developers.count(developer)/len(developers))):
-                devMajor+=1
-        return devMajor
-    def calculateOwnership(self):
-        ratio={}
-        developers=[]
-        setDevelopers=[]
-        for commit in self.commits:
-            developers.append(self.gr.get_commit(commit).author.name)
-        setDevelopers=set(developers)
-        for developer in setDevelopers:
-            ratio[developer]=developers.count(developer)/len(developers)
-        return ratio[max(ratio)]
-    def calculateIsBuggy(self):
-        # そのめそっどについてのコミットをその版から遡って、"intro"が最後に来ている→その版でbuggy
-        intro=0
-        fix=0
-        for commit in self.commits:
-            if(commit in self.commitsBug):
-                if self.nameFile in self.commitsBug[commit]["intro"]:
-                    intro=intro+1
-                if self.nameFile in self.commitsBug[commit]["fix"]:
-                    fix=fix+1
-        return intro!=fix
-    def calculateHCM(self):
-        def calculateH(probabilities):
-            sum=0
-            for probability in probabilities:
-                sum+=(probability*math.log2(probability))
-            sum=sum/math.log2(len(probabilities))
-            return -sum
-        def calculateHCPF(index, probabilities, type):
-            print(probabilities)
-            if type==3:
-                return(1/len(probabilities))*calculateH(probabilities)
-            else:
-                Exception()
-    def calculateHCMcopy(self):
-        def calculateH(probabilities):
-            sum=0
-            for probability in probabilities:
-                sum+=(probability*math.log2(probability))
-            sum=sum/math.log2(len(probabilities))
-            return -sum
-        def calculateHCPF(index, probabilities, type):
-            print(probabilities)
-            if type==3:
-                return(1/len(probabilities))*calculateH(probabilities)
-            else:
-                Exception()
+    def getTrain4Search(self, indexCV=0):
+        dataTrain=[[],[],[]]
+        with open(os.path.join(UtilPath.Datasets(),self.project,self.variableDependent,self.release4Test,"train"+str(indexCV)+".csv")) as f:
+            train = csv.reader(f)
+            for i,row in enumerate(train):
+                #print(item["id"])
+                dataTrain[0].append(row[0])
+                dataTrain[1].append([float(x) for x in row[2:]])
+                dataTrain[2].append(int(row[1]))
+            dataTrain[1]=np.array(dataTrain[1])
+            dataTrain[2]=np.array(dataTrain[2])
+            #print(dataTrain[1].shape)
+            #print(dataTrain[2].shape)
+            return dataTrain[1], dataTrain[2]
+
+    def getValid4Search(self, indexCV=0):
+        dataValid=[[],[],[]]
+        with open(os.path.join(UtilPath.Datasets(),self.project,self.variableDependent,self.release4Test,"valid"+str(indexCV)+".csv")) as f:
+            valid = csv.reader(f)
+            for i,row in enumerate(valid):
+                dataValid[0].append(row[0])
+                dataValid[1].append([float(x) for x in row[2:]])
+                dataValid[2].append(int(row[1]))
+            dataValid[1]=np.array(dataValid[1])
+            dataValid[2]=np.array(dataValid[2])
+            #print(dataValid[1].shape)
+            #print(dataValid[2].shape)
+        return dataValid[1], dataValid[2]
+
+    def getTrain4Test(self, indexCV=0):
+        dataTrain=[[],[],[]]
+        dataValid=[[],[],[]]
+        with open(os.path.join(UtilPath.Datasets(),self.project,self.variableDependent,self.release4Test,"train"+str(indexCV)+".csv")) as f:
+            train = csv.reader(f)
+            for i,row in enumerate(train):
+                dataTrain[0].append(row[0])
+                dataTrain[1].append([float(x) for x in row[2:]])
+                dataTrain[2].append(int(row[1]))
+        dataTrain[1]=np.array(dataTrain[1])
+        dataTrain[2]=np.array(dataTrain[2])
+        print(dataTrain[1].shape)
+        with open(os.path.join(UtilPath.Datasets(),self.project,self.variableDependent,self.release4Test,"valid"+str(indexCV)+".csv")) as f:
+            valid = csv.reader(f)
+            for i,row in enumerate(valid):
+                dataValid[0].append(row[0])
+                dataValid[1].append([float(x) for x in row[2:]])
+                dataValid[2].append(int(row[1]))
+        dataValid[1]=np.array(dataValid[1])
+        dataValid[2]=np.array(dataValid[2])
+        print(dataValid[1].shape)
+        return np.concatenate([dataTrain[1], dataValid[1]]), np.concatenate([dataTrain[2], dataValid[2]], 0)
+
+    def getTest4Test(self, indexCV=0):
+            dataTest=[[],[],[]]
+            with open(os.path.join(UtilPath.Datasets(),self.project,self.variableDependent,self.release4Test,"test.csv")) as f:
+                test = csv.reader(f)
+                for i,row in enumerate(test):
+                    dataTest[0].append(row[0])
+                    dataTest[1].append([float(x) for x in row[2:]])
+                    dataTest[2].append(int(row[1]))
+            dataTest[1]=np.array(dataTest[1])
+            dataTest[2]=np.array(dataTest[2])
+            print(dataTest[1].shape)
+            return dataTest[1],dataTest[2]
