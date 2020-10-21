@@ -165,7 +165,6 @@ class Modeler:
                 print('Validation loss: {}, mae: {}, acc: {}'.format(loss, mae, acc))
                 if loss<self.lossBest:
                     print("lossBest!: {}".format(loss))
-                    self.model.save(os.path.join(dirModel,project,str(loss)+'.h5'), include_optimizer=False)
                     self.lossBest=loss
                     ysPredictedLabel=[]
                     for yPredicted in ysPredicted:
