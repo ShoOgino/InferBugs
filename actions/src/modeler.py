@@ -249,5 +249,5 @@ class Modeler:
             opt = keras.optimizers.Nadam(lr=lrNadam, beta_1=beta_1Nadam, beta_2=beta_2Nadam, epsilon=epsilonNadam)
         model.compile(loss='binary_crossentropy', optimizer=opt, metrics=['acc'])
 
-        history=model.fit(xTrain, yTrain, epochs=epochs, batch_size=sizeBatch, verbose=verbose, validation_data=(xTest, yTest), callbacks=[EarlyStopping(monitor='val_loss', patience=100, verbose=0, mode='auto'), TestCallback(xTest, yTest, sizeBatch, resultsValid, 0)])
+        history=model.fit(xTrain, yTrain, epochs=epochs, batch_size=sizeBatch, verbose=verbose, validation_data=(xTest, yTest), callbacks=[TestCallback(xTest, yTest, sizeBatch, resultsValid, 0)])
         self.saveGraphTrain(history, 0)
