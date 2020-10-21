@@ -141,6 +141,41 @@ class Modeler:
         study.optimize(set_objective(xTrain, yTrain, xValid, yValid, modelAlgorithm), timeout = 60*60*10)
 
     def test(self, xTrain, yTrain, xTest, yTest, modelAlgorithm, hp):
+        class TestCallback(keras.callbacks.Callback):
+            def __init__(self, xValid, yValid,batchSize,resultsValid,indexCV):
+                self.lossBest=1000000
+                self.xValid = xValid
+                self.yValid = yValid
+                self.resultsValid=resultsValid
+                self.batchSize=batchSize
+                self.indexCV=indexCV
+            def on_epoch_end(self, epoch, logs={}):
+                xs, ys = self.xValid, self.yValid
+                loss, mae = self.model.evaluate(xs, ys,batch_size=self.batchSize,verbose=0)
+                ysPredicted=self.model.predict(xs)
+                count=0
+                for i in range(len(ys)):
+                    if abs(ys[i]-ysPredicted[i])<0.5:
+                        count=count+1
+                acc=count/len(xs)
+        
+                self.resultsValid["loss"].append(loss)
+                self.resultsValid["mae"].append(mae)
+                self.resultsValid["acc"].append(acc)
+                print('Validation loss: {}, mae: {}, acc: {}'.format(loss, mae, acc))
+                if loss<self.lossBest:
+                    print("lossBest!: {}".format(loss))
+                    self.model.save(os.path.join(dirModel,project,str(loss)+'.h5'), include_optimizer=False)
+                    self.lossBest=loss
+                    ysPredictedLabel=[]
+                    for yPredicted in ysPredicted:
+                        if yPredicted<0.5:
+                            ysPredictedLabel.append(0)
+                        else:
+                            ysPredictedLabel.append(1)
+                    #print(ysPredictedLabel)
+                    analyzeResult(ysPredictedLabel, ys)
+
         def analyzeResult(ysPredicted, yLabel):
             tp=0
             fp=0
@@ -213,5 +248,5 @@ class Modeler:
             opt = keras.optimizers.Nadam(lr=lrNadam, beta_1=beta_1Nadam, beta_2=beta_2Nadam, epsilon=epsilonNadam)
         model.compile(loss='binary_crossentropy', optimizer=opt, metrics=['acc'])
 
-        history=model.fit(xTrain, yTrain, epochs=epochs, batch_size=sizeBatch, verbose=verbose, validation_data=(xTest, yTest), callbacks=[EarlyStopping(monitor='val_loss', patience=100, verbose=0, mode='auto')])
+        history=model.fit(xTrain, yTrain, epochs=epochs, batch_size=sizeBatch, verbose=verbose, validation_data=(xTest, yTest), callbacks=[EarlyStopping(monitor='val_loss', patience=100, verbose=0, mode='auto'), TestCallback(xTest, yTest, sizeBatch, resultsValid, 0)])
         self.saveGraphTrain(history, 0)
