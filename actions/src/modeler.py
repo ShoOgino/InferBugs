@@ -12,6 +12,7 @@ import csv
 import matplotlib.pyplot as plt
 import keras
 from keras.callbacks import EarlyStopping
+from tensorflow.keras.callbacks import ReduceLROnPlateau
 import seaborn as sns
 from sklearn.metrics import confusion_matrix
 from tqdm.keras import TqdmCallback
@@ -81,41 +82,24 @@ class Modeler:
                     model.add(Dense(n_outputs,activation='sigmoid'))
                     return model
                 def chooseOptimizer(trial):
-                    nameOptimizer = trial.suggest_categorical('optimizer', ['sgd', 'adagrad', 'adadelta', 'adam', 'adamax', 'nadam'])
-                    if nameOptimizer == "sgd":
-                        lrSgd = trial.suggest_loguniform('lrSgd', 1e-5, 1e-2)
-                        momentumSgd = trial.suggest_uniform('momentumSgd', 0.9, 1)
-                        opt = keras.optimizers.SGD(lr=lrSgd, momentum=momentumSgd)
-                    elif nameOptimizer == "adagrad":
-                        opt = keras.optimizers.Adagrad()
-                    elif nameOptimizer == "adadelta":
-                        opt = keras.optimizers.Adadelta()
-                    elif nameOptimizer == 'adam':
+                    nameOptimizer = trial.suggest_categorical('optimizer', ['adam'])
+                    if nameOptimizer == 'adam':
                         lrAdam = trial.suggest_loguniform('lrAdam', 1e-5, 1e-2)
                         beta_1Adam = trial.suggest_uniform('beta1Adam', 0.9, 1)
                         beta_2Adam = trial.suggest_uniform('beta2Adam', 0.999, 1)
                         epsilonAdam = trial.suggest_loguniform('epsilonAdam', 1e-10, 1e-5)
                         opt = keras.optimizers.Adam(lr=lrAdam, beta_1=beta_1Adam, beta_2=beta_2Adam, epsilon=epsilonAdam)
-                    elif nameOptimizer == "adamax":
-                        lrAdamax = trial.suggest_loguniform('lrAdamax', 1e-5, 1e-2)
-                        beta_1Adamax = trial.suggest_uniform('beta1Adamax', 0.9, 1)
-                        beta_2Adamax = trial.suggest_uniform('beta2Adamax', 0.999, 1)
-                        epsilonAdamax = trial.suggest_loguniform('epsilonAdamax', 1e-10, 1e-5)
-                        opt = keras.optimizers.Adamax(lr=lrAdamax, beta_1=beta_1Adamax, beta_2=beta_2Adamax, epsilon=epsilonAdamax)
-                    elif nameOptimizer == "nadam":
-                        lrNadam = trial.suggest_loguniform('lrNadam', 1e-5, 2e-3)
-                        beta_1Nadam = trial.suggest_uniform('beta1Nadam', 0.9, 1)
-                        beta_2Nadam = trial.suggest_uniform('beta2Nadam', 0.999, 1)
-                        epsilonNadam = trial.suggest_loguniform('epsilonNadam', 1e-10, 1e-5)
-                        opt = keras.optimizers.Nadam(lr=lrNadam, beta_1=beta_1Nadam, beta_2=beta_2Nadam, epsilon=epsilonNadam)
                     return opt
-                verbose, epochs, sizeBatch = 0, 1000, trial.suggest_int("sizeBatch", 32, 256)
+                verbose, epochs, sizeBatch = 0, 10000, trial.suggest_int("sizeBatch", 64, 1024)
                 n_features, n_outputs = xTrain.shape[1], 1
                 model = chooseModel(trial)
                 opt = chooseOptimizer(trial)
                 model.build((None,n_features))
                 model.compile(loss='binary_crossentropy', optimizer=opt, metrics=['acc'])
-                history=model.fit(xTrain, yTrain, epochs=epochs, batch_size=sizeBatch, verbose=verbose, validation_data=(xValid, yValid), callbacks=[EarlyStopping(monitor='val_loss', patience=100, verbose=0, mode='auto')])
+                cbEarlyStopping = EarlyStopping(monitor='val_loss', patience=200, mode='auto')
+                cbReduceLR = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=100, min_lr=1e-5)
+                history=model.fit(xTrain, yTrain, epochs=epochs, batch_size=sizeBatch, verbose=verbose, validation_data=(xValid, yValid), callbacks=[cbEarlyStopping, cbReduceLR])
+                print(history.history["lr"])
                 self.saveGraphTrain(history, trial.number)
                 # 最小値のエポック数+6までの値の平均を取る。
                 lossesVal = history.history['val_loss']
@@ -158,7 +142,6 @@ class Modeler:
                     if abs(ys[i]-ysPredicted[i])<0.5:
                         count=count+1
                 acc=count/len(xs)
-        
                 self.resultsValid["loss"].append(loss)
                 self.resultsValid["mae"].append(mae)
                 self.resultsValid["acc"].append(acc)
@@ -174,7 +157,6 @@ class Modeler:
                             ysPredictedLabel.append(1)
                     #print(ysPredictedLabel)
                     analyzeResult(ysPredictedLabel, ys)
-
         def analyzeResult(ysPredicted, yLabel):
             tp=0
             fp=0
@@ -206,48 +188,65 @@ class Modeler:
             plt.ylabel("prediction")
             plt.tight_layout()
             plt.savefig('matricsConfusion.png')
+        def testDNN():
+            n_outputs = 1
+            model = Sequential()
+            for i in range(int(hp["NOlayers"])):
+                model.add(Dense(hp["NOUnits"+str(i)], activation=hp["activation"+str(i)]))
+                model.add(Dropout(hp["rateDropout"+str(i)]))
+                model.add(Dense(n_outputs,activation='sigmoid'))
 
+            resultsValid={"loss":[],"mae":[], "acc":[],"detail":[[]]}
 
-        n_outputs = 1
-        model = Sequential()
-        for i in range(int(hp["NOlayers"])):
-            model.add(Dense(hp["NOUnits"+str(i)], activation=hp["activation"+str(i)]))
-            model.add(Dropout(hp["rateDropout"+str(i)]))
-            model.add(Dense(n_outputs,activation='sigmoid'))
+            verbose, epochs, sizeBatch = 1, 10000, hp["sizeBatch"]
+            n_features, n_outputs = xTrain.shape[1], 1
 
-        resultsValid={"loss":[],"mae":[], "acc":[],"detail":[[]]}
+            model.build((None,n_features))
+            if hp["optimizer"] == "sgd":
+                lrSgd = hp["lrSgd"]
+                momentumSgd = hp["momentumSgd"]
+                opt = keras.optimizers.SGD(lr=lrSgd, momentum=momentumSgd)
+            elif hp["optimizer"] == "adagrad":
+                opt = keras.optimizers.Adagrad()
+            elif hp["optimizer"] == "adadelta":
+                opt = keras.optimizers.Adadelta()
+            elif hp["optimizer"] == 'adam':
+                lrAdam = hp["lrAdam"]
+                beta_1Adam = hp["beta1Adam"]
+                beta_2Adam = hp["beta2Adam"]
+                epsilonAdam = hp["epsilonAdam"]
+                opt = keras.optimizers.Adam(lr=lrAdam, beta_1=beta_1Adam, beta_2=beta_2Adam, epsilon=epsilonAdam)
+            elif hp["optimizer"] == "adamax":
+                lrAdamax = hp["lrAdamax"]
+                beta_1Adamax = hp["beta1Adamax"]
+                beta_2Adamax = hp["beta2Adamax"]
+                epsilonAdamax = hp["epsilonAdamax"]
+                opt = keras.optimizers.Adamax(lr=lrAdamax, beta_1=beta_1Adamax, beta_2=beta_2Adamax, epsilon=epsilonAdamax)
+            elif hp["optimizer"] == "nadam":
+                lrNadam = hp["lrNadam"]
+                beta_1Nadam = hp["beta1Nadam"]
+                beta_2Nadam = hp["beta2Nadam"]
+                epsilonNadam = hp["epsilonNadam"]
+                opt = keras.optimizers.Nadam(lr=lrNadam, beta_1=beta_1Nadam, beta_2=beta_2Nadam, epsilon=epsilonNadam)
+            model.compile(loss='binary_crossentropy', optimizer=opt, metrics=['acc'])
 
-        verbose, epochs, sizeBatch = 1, 10000, hp["sizeBatch"]
-        n_features, n_outputs = xTrain.shape[1], 1
-
-        model.build((None,n_features))
-        if hp["optimizer"] == "sgd":
-            lrSgd = hp["lrSgd"]
-            momentumSgd = hp["momentumSgd"]
-            opt = keras.optimizers.SGD(lr=lrSgd, momentum=momentumSgd)
-        elif hp["optimizer"] == "adagrad":
-            opt = keras.optimizers.Adagrad()
-        elif hp["optimizer"] == "adadelta":
-            opt = keras.optimizers.Adadelta()
-        elif hp["optimizer"] == 'adam':
-            lrAdam = hp["lrAdam"]
-            beta_1Adam = hp["beta1Adam"]
-            beta_2Adam = hp["beta2Adam"]
-            epsilonAdam = hp["epsilonAdam"]
-            opt = keras.optimizers.Adam(lr=lrAdam, beta_1=beta_1Adam, beta_2=beta_2Adam, epsilon=epsilonAdam)
-        elif hp["optimizer"] == "adamax":
-            lrAdamax = hp["lrAdamax"]
-            beta_1Adamax = hp["beta1Adamax"]
-            beta_2Adamax = hp["beta2Adamax"]
-            epsilonAdamax = hp["epsilonAdamax"]
-            opt = keras.optimizers.Adamax(lr=lrAdamax, beta_1=beta_1Adamax, beta_2=beta_2Adamax, epsilon=epsilonAdamax)
-        elif hp["optimizer"] == "nadam":
-            lrNadam = hp["lrNadam"]
-            beta_1Nadam = hp["beta1Nadam"]
-            beta_2Nadam = hp["beta2Nadam"]
-            epsilonNadam = hp["epsilonNadam"]
-            opt = keras.optimizers.Nadam(lr=lrNadam, beta_1=beta_1Nadam, beta_2=beta_2Nadam, epsilon=epsilonNadam)
-        model.compile(loss='binary_crossentropy', optimizer=opt, metrics=['acc'])
-
-        history=model.fit(xTrain, yTrain, epochs=epochs, batch_size=sizeBatch, verbose=verbose, validation_data=(xTest, yTest), callbacks=[TestCallback(xTest, yTest, sizeBatch, resultsValid, 0)])
-        self.saveGraphTrain(history, 0)
+            history=model.fit(xTrain, yTrain, epochs=epochs, batch_size=sizeBatch, verbose=verbose, validation_data=(xTest, yTest), callbacks=[TestCallback(xTest, yTest, sizeBatch, resultsValid, 0)])
+            self.saveGraphTrain(history, 0)
+        def testRF():
+            for i in range(100):
+                model=RandomForestClassifier(
+                    n_estimators=hp["n_estimators"],
+                    max_depth=hp["max_depth"],
+                    max_leaf_nodes=hp["max_leaf_nodes"],
+                    min_samples_leaf=hp["min_samples_leaf"],
+                    min_samples_split=hp["min_samples_split"],
+                    random_state=i)
+                model.fit(xTrain,yTrain)
+                ysPredicted=model.predict(xTest)
+                analyzeResult(ysPredicted, yTest)
+        if modelAlgorithm=="RF":
+            testRF()
+        elif modelAlgorithm=="DNN":
+            testDNN()
+        else:
+            raise Exception("modelAlgorithm must be RF or DNN")
