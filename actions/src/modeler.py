@@ -97,7 +97,7 @@ class Modeler:
                 model.build((None,n_features))
                 model.compile(loss='binary_crossentropy', optimizer=opt, metrics=['acc'])
                 cbEarlyStopping = EarlyStopping(monitor='val_loss', patience=200, mode='auto')
-                cbReduceLR = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=100, min_lr=1e-5)
+                cbReduceLR = ReduceLROnPlateau(monitor='val_loss', factor=trial.suggest_uniform('lrDecay', 0.1, 1), patience=100, min_lr=1e-5)
                 history=model.fit(xTrain, yTrain, epochs=epochs, batch_size=sizeBatch, verbose=verbose, validation_data=(xValid, yValid), callbacks=[cbEarlyStopping, cbReduceLR])
                 print(history.history["lr"])
                 self.saveGraphTrain(history, trial.number)
