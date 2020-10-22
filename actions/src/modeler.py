@@ -96,10 +96,10 @@ class Modeler:
                 opt = chooseOptimizer(trial)
                 model.build((None,n_features))
                 model.compile(loss='binary_crossentropy', optimizer=opt, metrics=['acc'])
-                cbEarlyStopping = EarlyStopping(monitor='val_loss', patience=200, mode='auto')
-                cbReduceLR = ReduceLROnPlateau(monitor='val_loss', factor=trial.suggest_uniform('lrDecay', 0.1, 1), patience=100, min_lr=1e-5)
-                history=model.fit(xTrain, yTrain, epochs=epochs, batch_size=sizeBatch, verbose=verbose, validation_data=(xValid, yValid), callbacks=[cbEarlyStopping, cbReduceLR])
-                print(history.history["lr"])
+                cbEarlyStopping = EarlyStopping(monitor='val_loss', patience=100, mode='auto')
+                #cbReduceLR = ReduceLROnPlateau(monitor='val_loss', factor=trial.suggest_uniform('lrDecay', 0.1, 0.5), patience=trial.suggest_int('lrDecayPatiance', 2, 50), min_lr=1e-5)
+                #history=model.fit(xTrain, yTrain, epochs=epochs, batch_size=sizeBatch, verbose=verbose, validation_data=(xValid, yValid), callbacks=[cbEarlyStopping, cbReduceLR])
+                history=model.fit(xTrain, yTrain, epochs=epochs, batch_size=sizeBatch, verbose=verbose, validation_data=(xValid, yValid), callbacks=[cbEarlyStopping])
                 self.saveGraphTrain(history, trial.number)
                 # 最小値のエポック数+6までの値の平均を取る。
                 lossesVal = history.history['val_loss']
