@@ -51,7 +51,7 @@ class Modeler:
         plt.clf()
         plt.close()
 
-    def search(self, xTrain, yTrain, xValid, yValid, modelAlgorithm):
+    def search(self, xTrain, yTrain, xValid, yValid, modelAlgorithm, time2Search):
         def set_objective(xTrain, yTrain, xValid, yValid, modelAlgorithm):
             def objectiveRF(trial):
                 params = {
@@ -122,7 +122,7 @@ class Modeler:
             else:
                 raise Exception("modelAlgorithm must be RF or DNN")
         study = optuna.create_study()
-        study.optimize(set_objective(xTrain, yTrain, xValid, yValid, modelAlgorithm), timeout = 60*60*10)
+        study.optimize(set_objective(xTrain, yTrain, xValid, yValid, modelAlgorithm), timeout = time2Search)
 
     def test(self, xTrain, yTrain, xTest, yTest, modelAlgorithm, hp):
         class TestCallback(keras.callbacks.Callback):

@@ -40,4 +40,4 @@ class Maneger:
         elif self.option["purpose"]=="search":
             xTrain4Search, yTrain4Search = dataset.getTrain4Search()
             xValid4Search, yValid4Search = dataset.getValid4Search()
-            modeler.search(xTrain4Search, yTrain4Search, xValid4Search, yValid4Search, self.option["modelAlgorithm"])
+            modeler.search(xTrain4Search, yTrain4Search, xValid4Search, yValid4Search, self.option["modelAlgorithm"], self.option["time2search"])
