@@ -146,8 +146,9 @@ class Modeler:
                 self.resultsValid["mae"].append(mae)
                 self.resultsValid["acc"].append(acc)
                 print('Validation loss: {}, mae: {}, acc: {}'.format(loss, mae, acc))
-                if loss<self.lossBest:
-                    print("lossBest!: {}".format(loss))
+                if True:
+                #if loss<self.lossBest:
+                    #print("lossBest!: {}".format(loss))
                     self.lossBest=loss
                     ysPredictedLabel=[]
                     for yPredicted in ysPredicted:
@@ -179,15 +180,18 @@ class Modeler:
             acc=(tp+tn)/(tp+fp+tn+fn+0.1)
             #print(str(tp)+", "+str(fp)+", "+str(fn)+", "+str(tn))
             #print("acc: "+ str(acc))
+            print(str(precision))
+            print(str(recall))
+            print(str(fValue))
             #print("precision: " + str(precision))
             #print("recall: " + str(recall))
-            print("F-value: "+ str(fValue))
-            cm=confusion_matrix(ysPredicted, yLabel)
-            sns.heatmap(cm, annot=True, fmt="1.0f",  cmap='Blues')
-            plt.xlabel("label")
-            plt.ylabel("prediction")
-            plt.tight_layout()
-            plt.savefig('matricsConfusion.png')
+            #print("F-value: "+ str(fValue))
+            #cm=confusion_matrix(ysPredicted, yLabel)
+            #sns.heatmap(cm, annot=True, fmt="1.0f",  cmap='Blues')
+            #plt.xlabel("label")
+            #plt.ylabel("prediction")
+            #plt.tight_layout()
+            #plt.savefig('matricsConfusion.png')
         def testDNN():
             n_outputs = 1
             model = Sequential()
@@ -198,7 +202,7 @@ class Modeler:
 
             resultsValid={"loss":[],"mae":[], "acc":[],"detail":[[]]}
 
-            verbose, epochs, sizeBatch = 1, 10000, hp["sizeBatch"]
+            verbose, epochs, sizeBatch = 1, 450, hp["sizeBatch"]
             n_features, n_outputs = xTrain.shape[1], 1
 
             model.build((None,n_features))
@@ -233,17 +237,16 @@ class Modeler:
             history=model.fit(xTrain, yTrain, epochs=epochs, batch_size=sizeBatch, verbose=verbose, validation_data=(xTest, yTest), callbacks=[TestCallback(xTest, yTest, sizeBatch, resultsValid, 0)])
             self.saveGraphTrain(history, 0)
         def testRF():
-            for i in range(100):
-                model=RandomForestClassifier(
-                    n_estimators=hp["n_estimators"],
-                    max_depth=hp["max_depth"],
-                    max_leaf_nodes=hp["max_leaf_nodes"],
-                    min_samples_leaf=hp["min_samples_leaf"],
-                    min_samples_split=hp["min_samples_split"],
-                    random_state=i)
-                model.fit(xTrain,yTrain)
-                ysPredicted=model.predict(xTest)
-                analyzeResult(ysPredicted, yTest)
+            model=RandomForestClassifier(
+                n_estimators=hp["n_estimators"],
+                max_depth=hp["max_depth"],
+                max_leaf_nodes=hp["max_leaf_nodes"],
+                min_samples_leaf=hp["min_samples_leaf"],
+                min_samples_split=hp["min_samples_split"],
+                random_state=42)
+            model.fit(xTrain,yTrain)
+            ysPredicted=model.predict(xTest)
+            analyzeResult(ysPredicted, yTest)
         if modelAlgorithm=="RF":
             testRF()
         elif modelAlgorithm=="DNN":
