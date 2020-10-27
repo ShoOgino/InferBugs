@@ -18,6 +18,8 @@ class Maneger:
         self.option = option
 
     def checkGPU(self):
+        if self.option["device"]=="CPU":
+            os.environ["CUDA_VISIBLE_DEVICES"]="-1"
         physical_devices = tf.config.experimental.list_physical_devices('GPU')
         if len(physical_devices) > 0:
             for k in range(len(physical_devices)):

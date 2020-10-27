@@ -202,7 +202,7 @@ class Modeler:
 
             resultsValid={"loss":[],"mae":[], "acc":[],"detail":[[]]}
 
-            verbose, epochs, sizeBatch = 1, 450, hp["sizeBatch"]
+            verbose, epochs, sizeBatch = 1, hp["epochs"], hp["sizeBatch"]
             n_features, n_outputs = xTrain.shape[1], 1
 
             model.build((None,n_features))
